@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>攻撃・回復カード対応ターン制ゲーム</title>
+  <title>ターン制カードゲーム（JSON対応）</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     #hand { margin-top: 20px; }
@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  <h1>攻撃・回復・特殊カード対応ターン制ゲーム</h1>
+  <h1>ターン制カードゲーム（JSON管理版）</h1>
 
   <input type="text" id="nameInput" placeholder="プレイヤー名">
   <button id="setNameBtn">名前設定</button>
@@ -60,37 +60,37 @@
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    function renderHand(hand) {
-  handDiv.innerHTML = "";
-  hand.forEach(card => {
-    const div = document.createElement("div");
-    div.className = "card";
-    let desc = card.name;
-    if (card.damage) desc += ` (攻撃${card.damage})`;
-    if (card.heal) desc += ` (回復${card.heal})`;
-    if (card.shield) desc += ` (防御${card.shield})`;
-    div.textContent = desc;
-
-    div.onclick = () => {
-      // card.name をサーバーに送る
-      socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
-      handDiv.innerHTML = "";
-      statusDiv.textContent = "相手のターンです…";
-    };
-
-    handDiv.appendChild(div);
-  });
-}
-
-
     function renderHP(hp, names) {
       hpDiv.innerHTML = "";
       for (const id in hp) {
-        const p = document.createElement("p");
         const displayName = names && names[id] ? names[id] : id;
+        const p = document.createElement("p");
         p.textContent = `${displayName}: HP ${hp[id]}`;
         hpDiv.appendChild(p);
       }
+    }
+
+    function renderHand(hand) {
+      handDiv.innerHTML = "";
+      hand.forEach(card => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        let desc = card.name;
+        if (card.damage) desc += ` (攻撃${card.damage})`;
+        if (card.heal) desc += ` (回復${card.heal})`;
+        if (card.shield) desc += ` (防御${card.shield})`;
+        div.textContent = desc;
+
+        div.onclick = () => {
+          // 重要：オブジェクトではなく name を送信
+          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
+          handDiv.innerHTML = "";
+          statusDiv.textContent = "相手のターンです…";
+        };
+
+        handDiv.appendChild(div);
+      });
     }
 
     socket.on("message", addMessage);
