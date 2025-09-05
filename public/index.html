@@ -6,15 +6,9 @@
   <style>
     body { font-family: sans-serif; padding: 20px; }
     #hand { margin-top: 20px; }
-    .card {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 5px;
-      background: lightblue;
-      border: 1px solid #333;
-      cursor: pointer;
-    }
+    .card { display: inline-block; padding: 10px 20px; margin: 5px; background: lightblue; border: 1px solid #333; cursor: pointer; }
     #messages { margin-top: 20px; border: 1px solid #ccc; padding: 10px; height: 150px; overflow-y: auto; }
+    #hp { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -23,20 +17,19 @@
   <button id="joinBtn">ルームに参加</button>
 
   <div id="status"></div>
-
+  <div id="hp"></div>
   <div id="hand"></div>
-
   <div id="messages"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
     const joinBtn = document.getElementById("joinBtn");
     const roomIdInput = document.getElementById("roomIdInput");
     const statusDiv = document.getElementById("status");
     const handDiv = document.getElementById("hand");
     const messagesDiv = document.getElementById("messages");
+    const hpDiv = document.getElementById("hp");
 
     let myRoomId = null;
 
@@ -54,20 +47,6 @@
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    socket.on("message", addMessage);
-    socket.on("roomFull", () => alert("このルームは満員です"));
-    socket.on("notYourTurn", () => alert("今はあなたのターンではありません"));
-    socket.on("invalidCard", () => alert("手札にないカードです"));
-
-    socket.on("yourTurn", (hand) => {
-      statusDiv.textContent = "あなたのターンです！カードを選んでください";
-      renderHand(hand);
-    });
-
-    socket.on("opponentPlayed", (card) => {
-      addMessage(`相手がカードを出しました: ${card}`);
-    });
-
     function renderHand(hand) {
       handDiv.innerHTML = "";
       hand.forEach(card => {
@@ -76,12 +55,45 @@
         div.textContent = card;
         div.onclick = () => {
           socket.emit("playCard", { roomId: myRoomId, card });
-          handDiv.innerHTML = ""; // 出したら手札消す
+          handDiv.innerHTML = "";
           statusDiv.textContent = "相手のターンです…";
         };
         handDiv.appendChild(div);
       });
     }
-  </script>
-</body>
-</html>
+
+    function renderHP(hp) {
+      hpDiv.innerHTML = "";
+      for (const id in hp) {
+        const p = document.createElement("p");
+        p.textContent = `${id}: HP ${hp[id]}`;
+        hpDiv.appendChild(p);
+      }
+    }
+
+    socket.on("message", addMessage);
+    socket.on("roomFull", () => alert("このルームは満員です"));
+    socket.on("notYourTurn", () => alert("今はあなたのターンではありません"));
+    socket.on("invalidCard", () => alert("手札にないカードです"));
+
+    socket.on("yourTurn", (hand, hp) => {
+      statusDiv.textContent = "あなたのターンです！カードを選んでください";
+      renderHand(hand);
+      renderHP(hp);
+    });
+
+    socket.on("opponentPlayed", (card) => {
+      addMessage(`相手がカードを出しました: ${card}`);
+    });
+
+    socket.on("updateHP", (hp) => {
+      renderHP(hp);
+    });
+
+    socket.on("gameOver", (winnerId) => {
+      if (socket.id === winnerId) {
+        statusDiv.textContent = "あなたの勝利！";
+      } else {
+        statusDiv.textContent = "あなたの敗北…";
+      }
+      handDiv.innerHTML = "";
