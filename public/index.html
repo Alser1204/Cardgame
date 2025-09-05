@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>カード対戦</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    #log { margin-top: 20px; }
+    button { margin: 5px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>カードゲーム</h1>
+  <button onclick="playCard('ドラゴン')">ドラゴンを出す</button>
+  <button onclick="playCard('魔法使い')">魔法使いを出す</button>
+  <div id="log"></div>
+
+  <script>
+    const socket = io();
+    const roomId = "room1"; // とりあえず固定部屋
+    socket.emit("joinRoom", roomId);
+
+    socket.on("message", (msg) => {
+      log(msg);
+    });
+
+    function playCard(card) {
+      socket.emit("playCard", { roomId, card });
+      log("あなた: " + card);
+    }
+
+    socket.on("opponentPlayed", (card) => {
+      log("相手: " + card);
+    });
+
+    function log(msg) {
+      document.getElementById("log").innerHTML += "<p>" + msg + "</p>";
+    }
+  </script>
+</body>
+</html>
