@@ -61,23 +61,27 @@
     }
 
     function renderHand(hand) {
+  handDiv.innerHTML = "";
+  hand.forEach(card => {
+    const div = document.createElement("div");
+    div.className = "card";
+    let desc = card.name;
+    if (card.damage) desc += ` (攻撃${card.damage})`;
+    if (card.heal) desc += ` (回復${card.heal})`;
+    if (card.shield) desc += ` (防御${card.shield})`;
+    div.textContent = desc;
+
+    div.onclick = () => {
+      // card.name をサーバーに送る
+      socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
       handDiv.innerHTML = "";
-      hand.forEach(card => {
-        const div = document.createElement("div");
-        div.className = "card";
-        let desc = card.name;
-        if (card.damage) desc += ` (攻撃${card.damage})`;
-        if (card.heal) desc += ` (回復${card.heal})`;
-        if (card.shield) desc += ` (防御${card.shield})`;
-        div.textContent = desc;
-        div.onclick = () => {
-          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
-          handDiv.innerHTML = "";
-          statusDiv.textContent = "相手のターンです…";
-        };
-        handDiv.appendChild(div);
-      });
-    }
+      statusDiv.textContent = "相手のターンです…";
+    };
+
+    handDiv.appendChild(div);
+  });
+}
+
 
     function renderHP(hp, names) {
       hpDiv.innerHTML = "";
