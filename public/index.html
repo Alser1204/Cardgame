@@ -13,6 +13,11 @@
 </head>
 <body>
   <h1>ターン制カードゲーム</h1>
+
+  <input type="text" id="nameInput" placeholder="プレイヤー名">
+  <button id="setNameBtn">名前設定</button>
+  <br><br>
+
   <input type="text" id="roomIdInput" placeholder="ルームID">
   <button id="joinBtn">ルームに参加</button>
 
@@ -30,8 +35,16 @@
     const handDiv = document.getElementById("hand");
     const messagesDiv = document.getElementById("messages");
     const hpDiv = document.getElementById("hp");
+    const nameInput = document.getElementById("nameInput");
+    const setNameBtn = document.getElementById("setNameBtn");
 
     let myRoomId = null;
+
+    setNameBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) return alert("名前を入力してください");
+      socket.emit("setName", name);
+    };
 
     joinBtn.onclick = () => {
       const roomId = roomIdInput.value.trim();
@@ -62,11 +75,12 @@
       });
     }
 
-    function renderHP(hp) {
+    function renderHP(hp, names) {
       hpDiv.innerHTML = "";
       for (const id in hp) {
         const p = document.createElement("p");
-        p.textContent = `${id}: HP ${hp[id]}`;
+        const displayName = names && names[id] ? names[id] : id;
+        p.textContent = `${displayName}: HP ${hp[id]}`;
         hpDiv.appendChild(p);
       }
     }
@@ -76,24 +90,28 @@
     socket.on("notYourTurn", () => alert("今はあなたのターンではありません"));
     socket.on("invalidCard", () => alert("手札にないカードです"));
 
-    socket.on("yourTurn", (hand, hp) => {
+    socket.on("yourTurn", (hand, hp, names) => {
       statusDiv.textContent = "あなたのターンです！カードを選んでください";
       renderHand(hand);
-      renderHP(hp);
+      renderHP(hp, names);
     });
 
     socket.on("opponentPlayed", (card) => {
       addMessage(`相手がカードを出しました: ${card}`);
     });
 
-    socket.on("updateHP", (hp) => {
-      renderHP(hp);
+    socket.on("updateHP", (hp, names) => {
+      renderHP(hp, names);
     });
 
-    socket.on("gameOver", (winnerId) => {
-      if (socket.id === winnerId) {
+    socket.on("gameOver", (winnerName) => {
+      if (winnerName === nameInput.value.trim()) {
         statusDiv.textContent = "あなたの勝利！";
       } else {
         statusDiv.textContent = "あなたの敗北…";
       }
       handDiv.innerHTML = "";
+    });
+  </script>
+</body>
+</html>
