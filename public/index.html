@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ターン制カードゲーム</title>
+  <title>攻撃・回復カード対応ターン制ゲーム</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     #hand { margin-top: 20px; }
@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  <h1>ターン制カードゲーム</h1>
+  <h1>攻撃・回復・特殊カード対応ターン制ゲーム</h1>
 
   <input type="text" id="nameInput" placeholder="プレイヤー名">
   <button id="setNameBtn">名前設定</button>
@@ -65,9 +65,13 @@
       hand.forEach(card => {
         const div = document.createElement("div");
         div.className = "card";
-        div.textContent = card;
+        let desc = card.name;
+        if (card.damage) desc += ` (攻撃${card.damage})`;
+        if (card.heal) desc += ` (回復${card.heal})`;
+        if (card.shield) desc += ` (防御${card.shield})`;
+        div.textContent = desc;
         div.onclick = () => {
-          socket.emit("playCard", { roomId: myRoomId, card });
+          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
           handDiv.innerHTML = "";
           statusDiv.textContent = "相手のターンです…";
         };
@@ -94,10 +98,6 @@
       statusDiv.textContent = "あなたのターンです！カードを選んでください";
       renderHand(hand);
       renderHP(hp, names);
-    });
-
-    socket.on("opponentPlayed", (card) => {
-      addMessage(`相手がカードを出しました: ${card}`);
     });
 
     socket.on("updateHP", (hp, names) => {
