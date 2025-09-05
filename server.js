@@ -13,11 +13,20 @@ const rooms = {};
 //   roomId: {
 //     players: [socket.id, ...],
 //     turnIndex: 0,
-//     hands: { socket.id: ["カードA", ...] },
+//     hands: { socket.id: [cardObj, ...] },
 //     hp: { socket.id: 10 },
-//     names: { socket.id: "名前" }
+//     names: { socket.id: "名前" },
+//     shield: { socket.id: 0 } // 被ダメ軽減
 //   }
 // }
+
+// カード定義
+const cardList = [
+  { name: "ファイア", damage: 2 },
+  { name: "ヒール", heal: 3 },
+  { name: "スラッシュ", damage: 1 },
+  { name: "ガード", shield: 2 }
+];
 
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
@@ -37,7 +46,7 @@ io.on("connection", (socket) => {
   // ルーム参加
   socket.on("joinRoom", (roomId) => {
     if (!rooms[roomId]) {
-      rooms[roomId] = { players: [], turnIndex: 0, hands: {}, hp: {}, names: {} };
+      rooms[roomId] = { players: [], turnIndex: 0, hands: {}, hp: {}, names: {}, shield: {} };
     }
     const room = rooms[roomId];
     if (room.players.length >= 2) {
@@ -46,18 +55,17 @@ io.on("connection", (socket) => {
     }
 
     room.players.push(socket.id);
-    room.hands[socket.id] = ["カード1", "カード2"];
+    room.hands[socket.id] = [cardList[0], cardList[1], cardList[2]]; // 初期手札
     room.hp[socket.id] = 10;
+    room.shield[socket.id] = 0;
 
     socket.join(roomId);
 
-    // 名前が未設定なら仮名を割り当て
     if (!room.names[socket.id]) room.names[socket.id] = `プレイヤー${room.players.length}`;
-
     const playerName = room.names[socket.id];
+
     io.to(roomId).emit("message", `${playerName} が参加しました (${room.players.length}/2)`);
 
-    // 2人揃ったらゲーム開始
     if (room.players.length === 2) {
       io.to(roomId).emit("message", "ゲーム開始！");
       const firstPlayer = room.players[room.turnIndex];
@@ -68,7 +76,7 @@ io.on("connection", (socket) => {
   });
 
   // カードプレイ
-  socket.on("playCard", ({ roomId, card }) => {
+  socket.on("playCard", ({ roomId, cardName }) => {
     const room = rooms[roomId];
     if (!room) return;
 
@@ -78,23 +86,37 @@ io.on("connection", (socket) => {
     }
 
     const hand = room.hands[socket.id];
-    if (!hand.includes(card)) {
+    const card = hand.find(c => c.name === cardName);
+    if (!card) {
       socket.emit("invalidCard");
       return;
     }
 
-    room.hands[socket.id] = hand.filter(c => c !== card);
+    // 手札削除
+    room.hands[socket.id] = hand.filter(c => c.name !== cardName);
 
     const opponentId = room.players.find(id => id !== socket.id);
-
-    // カード効果: 1ダメージ
-    room.hp[opponentId] -= 1;
-
     const myName = room.names[socket.id];
     const opponentName = room.names[opponentId];
 
+    // 効果判定
+    if (card.damage) {
+      const dmg = Math.max(0, card.damage - (room.shield[opponentId] || 0));
+      room.hp[opponentId] -= dmg;
+      room.shield[opponentId] = 0;
+      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
+    }
+    if (card.heal) {
+      room.hp[socket.id] += card.heal;
+      if (room.hp[socket.id] > 10) room.hp[socket.id] = 10;
+      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 自分のHPを ${card.heal} 回復`);
+    }
+    if (card.shield) {
+      room.shield[socket.id] = card.shield;
+      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 次のターンの被ダメを ${card.shield} 軽減`);
+    }
+
     io.to(roomId).emit("updateHP", room.hp, room.names);
-    io.to(roomId).emit("message", `${myName} が ${card} をプレイ！`);
 
     // 勝利判定
     if (room.hp[opponentId] <= 0) {
@@ -120,6 +142,7 @@ io.on("connection", (socket) => {
         delete room.hands[socket.id];
         delete room.hp[socket.id];
         delete room.names[socket.id];
+        delete room.shield[socket.id];
         io.to(roomId).emit("message", "プレイヤーが退出しました");
         if (room.players.length === 0) delete rooms[roomId];
       }
