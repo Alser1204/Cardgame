@@ -1,121 +1,119 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ターン制カードゲーム（JSON対応）</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #hand { margin-top: 20px; }
-    .card { display: inline-block; padding: 10px 20px; margin: 5px; background: lightblue; border: 1px solid #333; cursor: pointer; }
-    #messages { margin-top: 20px; border: 1px solid #ccc; padding: 10px; height: 150px; overflow-y: auto; }
-    #hp { margin-top: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>ターン制カードゲーム</title>
+<style>
+  body { font-family: sans-serif; }
+  #hand { display: flex; gap: 10px; margin-top: 10px; }
+  .card { padding: 10px; border: 1px solid #000; cursor: pointer; background: #f5f5f5; }
+  #messages { margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; }
+</style>
 </head>
 <body>
-  <h1>ターン制カードゲーム（JSON管理版）</h1>
+<h1>ターン制カードゲーム</h1>
 
-  <input type="text" id="nameInput" placeholder="プレイヤー名">
-  <button id="setNameBtn">名前設定</button>
-  <br><br>
+<div>
+  名前: <input type="text" id="nameInput" placeholder="名前を入力">
+  <button id="setNameBtn">設定</button>
+</div>
 
-  <input type="text" id="roomIdInput" placeholder="ルームID">
-  <button id="joinBtn">ルームに参加</button>
+<div>
+  ルームID: <input type="text" id="roomInput" placeholder="room1">
+  <button id="joinBtn">参加</button>
+</div>
 
-  <div id="status"></div>
-  <div id="hp"></div>
-  <div id="hand"></div>
-  <div id="messages"></div>
+<h3>手札</h3>
+<div id="hand"></div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const joinBtn = document.getElementById("joinBtn");
-    const roomIdInput = document.getElementById("roomIdInput");
-    const statusDiv = document.getElementById("status");
-    const handDiv = document.getElementById("hand");
-    const messagesDiv = document.getElementById("messages");
-    const hpDiv = document.getElementById("hp");
-    const nameInput = document.getElementById("nameInput");
-    const setNameBtn = document.getElementById("setNameBtn");
+<h3>HP</h3>
+<div id="hpDiv"></div>
 
-    let myRoomId = null;
+<h3>メッセージ</h3>
+<div id="messages"></div>
 
-    setNameBtn.onclick = () => {
-      const name = nameInput.value.trim();
-      if (!name) return alert("名前を入力してください");
-      socket.emit("setName", name);
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let myRoomId = null;
+
+// 要素
+const handDiv = document.getElementById("hand");
+const messagesDiv = document.getElementById("messages");
+const hpDiv = document.getElementById("hpDiv");
+
+// 名前設定
+document.getElementById("setNameBtn").onclick = () => {
+  const name = document.getElementById("nameInput").value.trim();
+  if (name) socket.emit("setName", name);
+};
+
+// ルーム参加
+document.getElementById("joinBtn").onclick = () => {
+  const roomId = document.getElementById("roomInput").value.trim();
+  if (!roomId) return;
+  myRoomId = roomId;
+  socket.emit("joinRoom", roomId);
+};
+
+// メッセージ受信
+socket.on("message", msg => {
+  const div = document.createElement("div");
+  div.textContent = msg;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+// HP更新
+socket.on("updateHP", (hp, names) => {
+  hpDiv.innerHTML = "";
+  for (const id in hp) {
+    const name = names[id] || id;
+    const div = document.createElement("div");
+    div.textContent = `${name}: HP ${hp[id]}`;
+    hpDiv.appendChild(div);
+  }
+});
+
+// ターン開始
+socket.on("yourTurn", (hand, hp, names) => {
+  renderHand(hand);
+  socket.emit("updateHP", hp, names);
+  const div = document.createElement("div");
+  div.textContent = "あなたのターンです。カードを選択してください。";
+  messagesDiv.appendChild(div);
+});
+
+// ゲーム終了
+socket.on("gameOver", winner => {
+  alert(`ゲーム終了！勝者: ${winner}`);
+  handDiv.innerHTML = "";
+});
+
+// 手札描画
+function renderHand(hand) {
+  handDiv.innerHTML = "";
+  hand.forEach(card => {
+    const div = document.createElement("div");
+    div.className = "card";
+    let desc = card.name;
+    if (card.damage) desc += ` (攻撃${card.damage})`;
+    if (card.heal) desc += ` (回復${card.heal})`;
+    if (card.shield) desc += ` (防御${card.shield})`;
+    div.textContent = desc;
+
+    div.onclick = () => {
+      if (!myRoomId) return;
+      socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
+      handDiv.innerHTML = "";
+      const infoDiv = document.createElement("div");
+      infoDiv.textContent = "相手のターンです…";
+      messagesDiv.appendChild(infoDiv);
     };
 
-    joinBtn.onclick = () => {
-      const roomId = roomIdInput.value.trim();
-      if (!roomId) return alert("ルームIDを入力してください");
-      myRoomId = roomId;
-      socket.emit("joinRoom", roomId);
-    };
-
-    function addMessage(msg) {
-      const p = document.createElement("p");
-      p.textContent = msg;
-      messagesDiv.appendChild(p);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function renderHP(hp, names) {
-      hpDiv.innerHTML = "";
-      for (const id in hp) {
-        const displayName = names && names[id] ? names[id] : id;
-        const p = document.createElement("p");
-        p.textContent = `${displayName}: HP ${hp[id]}`;
-        hpDiv.appendChild(p);
-      }
-    }
-
-    function renderHand(hand) {
-      handDiv.innerHTML = "";
-      hand.forEach(card => {
-        const div = document.createElement("div");
-        div.className = "card";
-
-        let desc = card.name;
-        if (card.damage) desc += ` (攻撃${card.damage})`;
-        if (card.heal) desc += ` (回復${card.heal})`;
-        if (card.shield) desc += ` (防御${card.shield})`;
-        div.textContent = desc;
-
-        div.onclick = () => {
-          // 重要：オブジェクトではなく name を送信
-          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
-          handDiv.innerHTML = "";
-          statusDiv.textContent = "相手のターンです…";
-        };
-
-        handDiv.appendChild(div);
-      });
-    }
-
-    socket.on("message", addMessage);
-    socket.on("roomFull", () => alert("このルームは満員です"));
-    socket.on("notYourTurn", () => alert("今はあなたのターンではありません"));
-    socket.on("invalidCard", () => alert("手札にないカードです"));
-
-    socket.on("yourTurn", (hand, hp, names) => {
-      statusDiv.textContent = "あなたのターンです！カードを選んでください";
-      renderHand(hand);
-      renderHP(hp, names);
-    });
-
-    socket.on("updateHP", (hp, names) => {
-      renderHP(hp, names);
-    });
-
-    socket.on("gameOver", (winnerName) => {
-      if (winnerName === nameInput.value.trim()) {
-        statusDiv.textContent = "あなたの勝利！";
-      } else {
-        statusDiv.textContent = "あなたの敗北…";
-      }
-      handDiv.innerHTML = "";
-    });
-  </script>
+    handDiv.appendChild(div);
+  });
+}
+</script>
 </body>
 </html>
