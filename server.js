@@ -10,7 +10,6 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-// JSONからカードを読み込む
 let cardList = [];
 try {
   const data = fs.readFileSync(path.join(__dirname, "cards.json"), "utf8");
@@ -46,7 +45,8 @@ io.on("connection", (socket) => {
         hp: {},
         names: {},
         shield: {},
-        deck: [...cardList].sort(() => Math.random() - 0.5)  // シャッフルした山札
+        deck: [...cardList].sort(() => Math.random() - 0.5),
+        effects: {} // 持続効果
       };
     }
 
@@ -54,15 +54,14 @@ io.on("connection", (socket) => {
     if (room.players.length >= 2) { socket.emit("roomFull"); return; }
 
     room.players.push(socket.id);
-    room.hands[socket.id] = room.deck.splice(0, handSize); // 山札から初期手札を配布
+    room.hands[socket.id] = room.deck.splice(0, handSize);
     room.hp[socket.id] = 10;
     room.shield[socket.id] = 0;
 
     socket.join(roomId);
     if (!room.names[socket.id]) room.names[socket.id] = `プレイヤー${room.players.length}`;
-    const playerName = room.names[socket.id];
 
-    io.to(roomId).emit("message", `${playerName} が参加しました (${room.players.length}/2)`);
+    io.to(roomId).emit("message", `${room.names[socket.id]} が参加しました (${room.players.length}/2)`);
 
     if (room.players.length === 2) {
       io.to(roomId).emit("message", "ゲーム開始！");
@@ -82,18 +81,17 @@ io.on("connection", (socket) => {
     const card = hand.find(c => c.name === cardName);
     if (!card) { socket.emit("invalidCard"); return; }
 
-    // 手札からカードを削除
     room.hands[socket.id] = hand.filter(c => c.name !== cardName);
-
     const opponentId = room.players.find(id => id !== socket.id);
     const myName = room.names[socket.id];
     const opponentName = room.names[opponentId];
 
-    // 効果判定
+    // --- 特殊効果処理 ---
     if (card.damage) {
-      const dmg = Math.max(0, card.damage - (room.shield[opponentId] || 0));
+      let dmg = card.damage;
+      if (!card.ignoreShield) dmg = Math.max(0, dmg - (room.shield[opponentId] || 0));
       room.hp[opponentId] -= dmg;
-      room.shield[opponentId] = 0;
+      if (!card.ignoreShield) room.shield[opponentId] = 0;
       io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
     }
     if (card.heal) {
@@ -106,7 +104,41 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 次のターンの被ダメを ${card.shield} 軽減`);
     }
 
-    // 山札からカード補充
+    // multiTurn 効果登録
+    if (card.effect === "multiTurn") {
+      room.effects[opponentId] = room.effects[opponentId] || [];
+      room.effects[opponentId].push({ card, remaining: card.turns });
+    }
+
+    // skipNextTurn
+    if (card.effect === "skipNextTurn") {
+      room.effects[opponentId] = room.effects[opponentId] || [];
+      room.effects[opponentId].push({ card, skip: true });
+      io.to(roomId).emit("message", `${opponentName} の次のターンがスキップされます！`);
+    }
+
+    // drawCard
+    if (card.effect === "drawCard") {
+      if (room.deck.length > 0) {
+        const drawn = room.deck.splice(0,1)[0];
+        room.hands[socket.id].push(drawn);
+        io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
+      }
+    }
+
+    // swapHand
+    if (card.effect === "swapHand") {
+      if (room.hands[opponentId].length > 0 && room.hands[socket.id].length > 0) {
+        const myCardIndex = Math.floor(Math.random()*room.hands[socket.id].length);
+        const oppCardIndex = Math.floor(Math.random()*room.hands[opponentId].length);
+        const temp = room.hands[socket.id][myCardIndex];
+        room.hands[socket.id][myCardIndex] = room.hands[opponentId][oppCardIndex];
+        room.hands[opponentId][oppCardIndex] = temp;
+        io.to(roomId).emit("message", `${myName} と ${opponentName} の手札が1枚入れ替わった！`);
+      }
+    }
+
+    // 山札から手札補充
     if (room.deck.length > 0 && room.hands[socket.id].length < handSize) {
       const drawn = room.deck.splice(0, 1)[0];
       room.hands[socket.id].push(drawn);
@@ -123,9 +155,22 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // ターン交代
-    room.turnIndex = (room.turnIndex + 1) % room.players.length;
-    const nextPlayer = room.players[room.turnIndex];
+    // --- ターン交代 ---
+    let nextIndex = (room.turnIndex + 1) % room.players.length;
+    let nextPlayer = room.players[nextIndex];
+
+    // スキップ効果がある場合
+    if (room.effects[nextPlayer]) {
+      const skipEffect = room.effects[nextPlayer].find(e => e.skip);
+      if (skipEffect) {
+        io.to(roomId).emit("message", `${room.names[nextPlayer]} のターンはスキップされました！`);
+        room.effects[nextPlayer] = room.effects[nextPlayer].filter(e => !e.skip);
+        nextIndex = (nextIndex + 1) % room.players.length;
+        nextPlayer = room.players[nextIndex];
+      }
+    }
+
+    room.turnIndex = nextIndex;
     io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp, room.names);
   });
 
@@ -139,6 +184,7 @@ io.on("connection", (socket) => {
         delete room.hp[socket.id];
         delete room.names[socket.id];
         delete room.shield[socket.id];
+        delete room.effects[socket.id];
         io.to(roomId).emit("message", "プレイヤーが退出しました");
         if (room.players.length === 0) delete rooms[roomId];
       }
