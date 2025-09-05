@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -12,7 +13,7 @@ app.use(express.static("public"));
 // JSONからカードを読み込む
 let cardList = [];
 try {
-  const data = fs.readFileSync("cards.json", "utf8");
+  const data = fs.readFileSync(path.join(__dirname, "cards.json"), "utf8");
   cardList = JSON.parse(data);
   console.log("カードデータ読み込み成功:", cardList);
 } catch (err) {
@@ -20,6 +21,7 @@ try {
 }
 
 const rooms = {};
+const handSize = 3;
 
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
@@ -36,12 +38,23 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinRoom", (roomId) => {
-    if (!rooms[roomId]) rooms[roomId] = { players: [], turnIndex: 0, hands: {}, hp: {}, names: {}, shield: {} };
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        players: [],
+        turnIndex: 0,
+        hands: {},
+        hp: {},
+        names: {},
+        shield: {},
+        deck: [...cardList].sort(() => Math.random() - 0.5)  // シャッフルした山札
+      };
+    }
+
     const room = rooms[roomId];
     if (room.players.length >= 2) { socket.emit("roomFull"); return; }
 
     room.players.push(socket.id);
-    room.hands[socket.id] = cardList.sort(() => Math.random() - 0.5).slice(0, 3); 
+    room.hands[socket.id] = room.deck.splice(0, handSize); // 山札から初期手札を配布
     room.hp[socket.id] = 10;
     room.shield[socket.id] = 0;
 
@@ -69,7 +82,9 @@ io.on("connection", (socket) => {
     const card = hand.find(c => c.name === cardName);
     if (!card) { socket.emit("invalidCard"); return; }
 
+    // 手札からカードを削除
     room.hands[socket.id] = hand.filter(c => c.name !== cardName);
+
     const opponentId = room.players.find(id => id !== socket.id);
     const myName = room.names[socket.id];
     const opponentName = room.names[opponentId];
@@ -91,8 +106,16 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 次のターンの被ダメを ${card.shield} 軽減`);
     }
 
+    // 山札からカード補充
+    if (room.deck.length > 0 && room.hands[socket.id].length < handSize) {
+      const drawn = room.deck.splice(0, 1)[0];
+      room.hands[socket.id].push(drawn);
+      io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
+    }
+
     io.to(roomId).emit("updateHP", room.hp, room.names);
 
+    // 勝利判定
     if (room.hp[opponentId] <= 0) {
       io.to(roomId).emit("message", `${myName} の勝利！`);
       io.to(roomId).emit("gameOver", myName);
@@ -100,6 +123,7 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // ターン交代
     room.turnIndex = (room.turnIndex + 1) % room.players.length;
     const nextPlayer = room.players[room.turnIndex];
     io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp, room.names);
