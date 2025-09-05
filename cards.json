@@ -1,0 +1,8 @@
+[
+  { "name": "ファイア", "damage": 2 },
+  { "name": "スラッシュ", "damage": 1 },
+  { "name": "ヒール", "heal": 3 },
+  { "name": "ガード", "shield": 2 },
+  { "name": "ライトニング", "damage": 3 },
+  { "name": "リカバー", "heal": 2 }
+]
