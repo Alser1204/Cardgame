@@ -19,8 +19,7 @@ try {
   console.error("カードデータ読み込みエラー:", err);
 }
 
-const rooms = {}; 
-// rooms = { roomId: { players: [], turnIndex: 0, hands: {}, hp: {}, names: {}, shield: {} } }
+const rooms = {};
 
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
@@ -42,7 +41,7 @@ io.on("connection", (socket) => {
     if (room.players.length >= 2) { socket.emit("roomFull"); return; }
 
     room.players.push(socket.id);
-    room.hands[socket.id] = cardList.sort(() => Math.random() - 0.5).slice(0, 3); // 初期手札
+    room.hands[socket.id] = cardList.sort(() => Math.random() - 0.5).slice(0, 3); 
     room.hp[socket.id] = 10;
     room.shield[socket.id] = 0;
 
@@ -107,7 +106,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("user disconnected:", socket.id);
     for (const roomId in rooms) {
       const room = rooms[roomId];
       const index = room.players.indexOf(socket.id);
@@ -125,6 +123,4 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`listening on *:${PORT}`);
-});
+server.listen(PORT, () => console.log(`listening on *:${PORT}`));
