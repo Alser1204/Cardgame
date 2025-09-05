@@ -8,23 +8,36 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-// 部屋ごとのデータ管理
 const rooms = {}; 
 // rooms = {
 //   roomId: {
 //     players: [socket.id, ...],
 //     turnIndex: 0,
-//     hands: { socketId: ["カードA", ...] },
-//     hp: { socketId: 10 }
+//     hands: { socket.id: ["カードA", ...] },
+//     hp: { socket.id: 10 },
+//     names: { socket.id: "名前" }
 //   }
 // }
 
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
 
+  // 名前設定
+  socket.on("setName", (name) => {
+    for (const roomId in rooms) {
+      const room = rooms[roomId];
+      if (room.players.includes(socket.id)) {
+        if (!room.names) room.names = {};
+        room.names[socket.id] = name;
+        io.to(roomId).emit("message", `${name} が参加しました`);
+      }
+    }
+  });
+
+  // ルーム参加
   socket.on("joinRoom", (roomId) => {
     if (!rooms[roomId]) {
-      rooms[roomId] = { players: [], turnIndex: 0, hands: {}, hp: {} };
+      rooms[roomId] = { players: [], turnIndex: 0, hands: {}, hp: {}, names: {} };
     }
     const room = rooms[roomId];
     if (room.players.length >= 2) {
@@ -37,14 +50,16 @@ io.on("connection", (socket) => {
     room.hp[socket.id] = 10;
 
     socket.join(roomId);
-    io.to(roomId).emit("message", `プレイヤーが参加しました (${room.players.length}/2)`);
+    const playerName = room.names[socket.id] || socket.id;
+    io.to(roomId).emit("message", `${playerName} が参加しました (${room.players.length}/2)`);
 
     // 2人揃ったらゲーム開始
     if (room.players.length === 2) {
       io.to(roomId).emit("message", "ゲーム開始！");
       const firstPlayer = room.players[room.turnIndex];
-      io.to(firstPlayer).emit("yourTurn", room.hands[firstPlayer], room.hp);
-      io.to(room.players[(room.turnIndex + 1) % 2]).emit("updateHP", room.hp);
+      io.to(firstPlayer).emit("yourTurn", room.hands[firstPlayer], room.hp, room.names);
+      const nextPlayer = room.players[(room.turnIndex + 1) % 2];
+      io.to(nextPlayer).emit("updateHP", room.hp, room.names);
     }
   });
 
@@ -53,36 +68,35 @@ io.on("connection", (socket) => {
     const room = rooms[roomId];
     if (!room) return;
 
-    // 自分のターンか確認
     if (room.players[room.turnIndex] !== socket.id) {
       socket.emit("notYourTurn");
       return;
     }
 
-    // 手札にあるか確認
     const hand = room.hands[socket.id];
     if (!hand.includes(card)) {
       socket.emit("invalidCard");
       return;
     }
 
-    // 手札からカード削除
+    // 手札削除
     room.hands[socket.id] = hand.filter(c => c !== card);
 
-    // 相手ID
     const opponentId = room.players.find(id => id !== socket.id);
 
     // カード効果: 1ダメージ
     room.hp[opponentId] -= 1;
 
-    // HP更新通知
-    io.to(roomId).emit("updateHP", room.hp);
-    io.to(roomId).emit("message", `${socket.id} が ${card} をプレイ！`);
+    const myName = room.names[socket.id] || socket.id;
+    const opponentName = room.names[opponentId] || opponentId;
+
+    io.to(roomId).emit("updateHP", room.hp, room.names);
+    io.to(roomId).emit("message", `${myName} が ${card} をプレイ！`);
 
     // 勝利判定
     if (room.hp[opponentId] <= 0) {
-      io.to(roomId).emit("message", `${socket.id} の勝利！`);
-      io.to(roomId).emit("gameOver", socket.id);
+      io.to(roomId).emit("message", `${myName} の勝利！`);
+      io.to(roomId).emit("gameOver", myName);
       delete rooms[roomId];
       return;
     }
@@ -90,7 +104,7 @@ io.on("connection", (socket) => {
     // ターン交代
     room.turnIndex = (room.turnIndex + 1) % room.players.length;
     const nextPlayer = room.players[room.turnIndex];
-    io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp);
+    io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp, room.names);
   });
 
   socket.on("disconnect", () => {
@@ -102,6 +116,7 @@ io.on("connection", (socket) => {
         room.players.splice(index, 1);
         delete room.hands[socket.id];
         delete room.hp[socket.id];
+        delete room.names[socket.id];
         io.to(roomId).emit("message", "プレイヤーが退出しました");
         if (room.players.length === 0) delete rooms[roomId];
       }
