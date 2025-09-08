@@ -69,6 +69,7 @@ io.on("connection", (socket) => {
       io.to(firstPlayer).emit("yourTurn", room.hands[firstPlayer], room.hp, room.names);
       const nextPlayer = room.players[(room.turnIndex + 1) % 2];
       io.to(nextPlayer).emit("updateHP", room.hp, room.names);
+      io.to(nextPlayer).emit("updateHand", room.hands[nextPlayer]);
     }
   });
 
@@ -122,6 +123,7 @@ io.on("connection", (socket) => {
       if (room.deck.length > 0) {
         const drawn = room.deck.splice(0,1)[0];
         room.hands[socket.id].push(drawn);
+        io.to(socket.id).emit("updateHand", room.hands[socket.id]);
         io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
       }
     }
