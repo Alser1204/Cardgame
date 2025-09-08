@@ -78,10 +78,15 @@ socket.on("updateHP", (hp, names) => {
 // ターン開始
 socket.on("yourTurn", (hand, hp, names) => {
   renderHand(hand);
-  socket.emit("updateHP", hp, names);
+  // socket.emit("updateHP", hp, names); ←これ削除
   const div = document.createElement("div");
   div.textContent = "あなたのターンです。カードを選択してください。";
   messagesDiv.appendChild(div);
+});
+
+
+  socket.on("updateHand", (hand) => {
+  renderHand(hand);
 });
 
 // ゲーム終了
