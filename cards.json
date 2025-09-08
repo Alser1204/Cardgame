@@ -11,5 +11,6 @@
   { "name": "フリーズ", "damage": 1, "effect": "skipNextTurn" },
   { "name": "ストーム", "damage": 1, "effect": "multiTurn", "turns": 2 },
   { "name": "ドロー", "effect": "drawCard" },
-  { "name": "スワップ", "effect": "swapHand" }
+  { "name": "スワップ", "effect": "swapHand" },
+  { "name": "殺す攻撃", "damage": 30 }
 ]
