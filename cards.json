@@ -12,7 +12,7 @@
   { "name": "ストーム", "damage": 1, "effect": "multiTurn", "turns": 2 },
   { "name": "ドロー", "effect": "drawCard" },
   { "name": "スワップ", "effect": "swapHand" },
-  { "name": "殺す攻撃", "damage": 30 }
+  { "name": "殺す攻撃", "damage": 30 },
   {
     "name": "power_strike",
     "display_name": "パワーストライク",
