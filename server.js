@@ -31,7 +31,7 @@ io.on("connection", (socket) => {
       if (room.players.includes(socket.id)) {
         room.names[socket.id] = name;
         io.to(roomId).emit("message", `${name} が名前を設定しました`);
-        io.to(roomId).emit("updateHP", room.hp, room.names);
+        io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
       }
     }
   });
