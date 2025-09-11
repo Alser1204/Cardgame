@@ -13,4 +13,51 @@
   { "name": "ドロー", "effect": "drawCard" },
   { "name": "スワップ", "effect": "swapHand" },
   { "name": "殺す攻撃", "damage": 30 }
+  {
+    "name": "power_strike",
+    "display_name": "パワーストライク",
+    "damage": 3,
+    "effect": "atkUp",
+    "damageBoost": 2,
+    "turns": 3
+  },
+  {
+    "name": "fury_blow",
+    "display_name": "フューリーブロー",
+    "damage": 2,
+    "effect": "atkMultiplier",
+    "multiplier": 1.5,
+    "turns": 2
+  },
+  {
+    "name": "guard_up",
+    "display_name": "ガードアップ",
+    "shield": 2,
+    "effect": "shieldUp",
+    "shieldBoost": 2,
+    "turns": 3
+  },
+  {
+    "name": "fortify",
+    "display_name": "フォーティファイ",
+    "shield": 1,
+    "effect": "shieldMultiplier",
+    "multiplier": 1.5,
+    "turns": 2
+  },
+  {
+    "name": "heal_potion",
+    "display_name": "ヒールポーション",
+    "heal": 3
+  },
+  {
+    "name": "quick_draw",
+    "display_name": "クイックドロー",
+    "effect": "drawCard"
+  },
+  {
+    "name": "skip_enemy",
+    "display_name": "スキップショット",
+    "effect": "skipNextTurn"
+  }
 ]
