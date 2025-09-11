@@ -107,7 +107,8 @@ function renderHand(hand) {
     img.src = `images/${card.name}.jpg`;  
     img.alt = card.name;
     img.style.width = "100px";
-    img.style.height = "150px";
+    img.style.height = "100px";       // 高さも幅に合わせて正方形
+    img.style.objectFit = "cover";    // 縦横比を保ったまま正方形に収める
     img.style.display = "block";
 
     img.onerror = () => {
