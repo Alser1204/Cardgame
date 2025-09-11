@@ -181,7 +181,7 @@ io.on("connection", (socket) => {
       io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
     }
 
-    io.to(roomId).emit("updateHP", room.hp, room.names);
+    io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
 
     // --- 勝利判定 ---
     if (room.hp[opponentId] <= 0) {
