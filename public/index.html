@@ -115,7 +115,8 @@ function renderHand(hand) {
     };
 
     // カード説明（ツールチップ用文字列）
-    let desc = card.name;
+    let displayName = card.display_name || card.name;  // display_name があれば優先
+    let desc = displayName;
     if (card.damage) desc += ` (攻撃${card.damage})`;
     if (card.heal) desc += ` (回復${card.heal})`;
     if (card.shield) desc += ` (防御${card.shield})`;
