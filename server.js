@@ -1,3 +1,78 @@
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static("public"));
+
+let cardList = [];
+try {
+  const data = fs.readFileSync(path.join(__dirname, "cards.json"), "utf8");
+  cardList = JSON.parse(data);
+  console.log("カードデータ読み込み成功:", cardList);
+} catch (err) {
+  console.error("カードデータ読み込みエラー:", err);
+}
+
+const rooms = {};
+const handSize = 5;
+
+io.on("connection", (socket) => {
+  console.log("a user connected:", socket.id);
+
+  socket.on("setName", (name) => {
+    for (const roomId in rooms) {
+      const room = rooms[roomId];
+      if (room.players.includes(socket.id)) {
+        room.names[socket.id] = name;
+        io.to(roomId).emit("message", `${name} が名前を設定しました`);
+        io.to(roomId).emit("updateHP", room.hp, room.names);
+      }
+    }
+  });
+
+  socket.on("joinRoom", (roomId) => {
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        players: [],
+        turnIndex: 0,
+        hands: {},
+        hp: {},
+        names: {},
+        shield: {},
+        deck: [...cardList].sort(() => Math.random() - 0.5),
+        effects: {} // 持続効果
+      };
+    }
+
+    const room = rooms[roomId];
+    if (room.players.length >= 2) { socket.emit("roomFull"); return; }
+
+    room.players.push(socket.id);
+    room.hands[socket.id] = room.deck.splice(0, handSize);
+    room.hp[socket.id] = 10;
+    room.shield[socket.id] = 0;
+
+    socket.join(roomId);
+    if (!room.names[socket.id]) room.names[socket.id] = `プレイヤー${room.players.length}`;
+
+    io.to(roomId).emit("message", `${room.names[socket.id]} が参加しました (${room.players.length}/2)`);
+
+    if (room.players.length === 2) {
+      io.to(roomId).emit("message", "ゲーム開始！");
+      const firstPlayer = room.players[room.turnIndex];
+      io.to(firstPlayer).emit("yourTurn", room.hands[firstPlayer], room.hp, room.names);
+      const nextPlayer = room.players[(room.turnIndex + 1) % 2];
+      io.to(nextPlayer).emit("updateHP", room.hp, room.names);
+      io.to(nextPlayer).emit("updateHand", room.hands[nextPlayer]);
+    }
+  });
+
 socket.on("playCard", ({ roomId, cardName }) => {
   const room = rooms[roomId];
   if (!room) return;
