@@ -104,14 +104,14 @@ function renderHand(hand) {
 
     // 画像要素
     const img = document.createElement("img");
-    img.src = `images/${card.name}.pjpg`;  
+    img.src = `images/${card.name}.jpg`;  
     img.alt = card.name;
     img.style.width = "100px";
     img.style.height = "150px";
     img.style.display = "block";
 
     img.onerror = () => {
-      img.src = "images/default.jpg";  // 代替画像
+      img.src = "../images/default.jpg";  // 代替画像
     };
 
     // カード説明（ツールチップ用文字列）
