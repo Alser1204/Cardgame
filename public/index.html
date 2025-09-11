@@ -118,12 +118,59 @@ function renderHand(hand) {
     // カード説明（ツールチップ用文字列）
     let displayName = card.display_name || card.name;  // display_name があれば優先
     let desc = displayName;
+    
+    // 攻撃・回復・防御
     if (card.damage) desc += ` (攻撃${card.damage})`;
     if (card.heal) desc += ` (回復${card.heal})`;
     if (card.shield) desc += ` (防御${card.shield})`;
+    
+    // エフェクト説明
+    if (card.effect) {
+      switch(card.effect) {
+        case "atkUp":
+          desc += " (効果: 攻撃力アップ)";
+          break;
+        case "atkMultiplier":
+          desc += ` (効果: 攻撃力 ×${card.multiplier})`;
+          break;
+        case "shieldUp":
+          desc += " (効果: 防御力アップ)";
+          break;
+        case "shieldMultiplier":
+          desc += ` (効果: 防御力 ×${card.multiplier})`;
+          break;
+        case "skipNextTurn":
+          desc += " (効果: 次のターンスキップ)";
+          break;
+        case "drawCard":
+          desc += ` (効果: カード${card.draw || 1}枚引く)`; // draw プロパティがあれば
+          break;
+        case "swapHand":
+          desc += " (効果: 手札1枚交換)";
+          break;
+        case "multiTurn":
+          desc += ` (効果: ${card.turns}ターン持続効果)`;
+          break;
+        default:
+          desc += ` (効果: ${card.effect})`;
+      }
+    }
 
     // ツールチップ
     div.title = desc;
+
+    // --- ラベル表示 ---
+    const label = document.createElement("div");
+    label.style.textAlign = "center";
+    label.style.fontSize = "12px";
+    label.style.marginTop = "4px";
+    let labels = [];
+    if (card.damage) labels.push("攻撃");
+    if (card.heal) labels.push("回復");
+    if (card.shield) labels.push("防御");
+    if (card.effect) labels.push("効果");
+    label.textContent = labels.join(" / ");
+    div.appendChild(label);
 
     // クリック時の処理
     div.onclick = () => {
