@@ -22,6 +22,52 @@ try {
 const rooms = {};
 const handSize = 5;
 
+function applyStartOfTurnEffects(room, playerId) {
+  if (!room.effects[playerId]) return;
+
+  let skipTurn = false;
+  let dmgThisTurn = 0;
+  let healThisTurn = 0;
+
+  // すべての効果を処理
+  room.effects[playerId].forEach(e => {
+    if (e.remaining > 0) {
+      // スキップ効果
+      if (e.card.effect === "skipNextTurn") {
+        skipTurn = true;
+      }
+      // 継続ダメージ/回復
+      if (e.card.effect === "multiTurn") {
+        if (e.card.damage) dmgThisTurn += e.card.damage;
+        if (e.card.heal) healThisTurn += e.card.heal;
+      }
+      // バフ (atkUp, atkMultiplier, shieldUp, shieldMultiplier)
+      if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier"].includes(e.card.effect)) {
+        // 攻撃や防御の計算は playCard 側で適用される
+        // ここでは「残りターンを減らす」だけ
+      }
+
+      // 1ターン経過
+      e.remaining -= 1;
+    }
+  });
+
+  // HPに反映
+  if (dmgThisTurn > 0) {
+    room.hp[playerId] -= dmgThisTurn;
+  }
+  if (healThisTurn > 0) {
+    room.hp[playerId] += healThisTurn;
+    if (room.hp[playerId] > 10) room.hp[playerId] = 10;
+  }
+
+  // 残りターンが0の効果を削除
+  room.effects[playerId] = room.effects[playerId].filter(e => e.remaining > 0);
+
+  return { skipTurn, dmgThisTurn, healThisTurn };
+}
+
+
 io.on("connection", (socket) => {
   console.log("a user connected:", socket.id);
 
@@ -183,27 +229,38 @@ io.on("connection", (socket) => {
 
     io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
 
-    // --- 勝利判定 ---
-    if (room.hp[opponentId] <= 0) {
-      io.to(roomId).emit("message", `${myName} の勝利！`);
-      io.to(roomId).emit("gameOver", myName);
-      delete rooms[roomId];
-      return;
-    }
-
     // --- ターン交代 ---
-    let nextIndex = (room.turnIndex + 1) % room.players.length;
-    let nextPlayer = room.players[nextIndex];
+let nextIndex = (room.turnIndex + 1) % room.players.length;
+let nextPlayer = room.players[nextIndex];
 
-    if (room.effects[nextPlayer]) {
-      const skipEffect = room.effects[nextPlayer].find(e => e.skip);
-      if (skipEffect) {
-        io.to(roomId).emit("message", `${room.names[nextPlayer]} のターンはスキップされました！`);
-        room.effects[nextPlayer] = room.effects[nextPlayer].filter(e => !e.skip);
-        nextIndex = (nextIndex + 1) % room.players.length;
-        nextPlayer = room.players[nextIndex];
-      }
-    }
+// 次プレイヤーのターン開始効果を処理
+const effectResult = applyStartOfTurnEffects(room, nextPlayer);
+
+if (effectResult) {
+  if (effectResult.dmgThisTurn > 0) {
+    io.to(roomId).emit("message", `${room.names[nextPlayer]} は効果で ${effectResult.dmgThisTurn} ダメージを受けた！`);
+  }
+  if (effectResult.healThisTurn > 0) {
+    io.to(roomId).emit("message", `${room.names[nextPlayer]} は効果で ${effectResult.healThisTurn} 回復した！`);
+  }
+  if (effectResult.skipTurn) {
+    io.to(roomId).emit("message", `${room.names[nextPlayer]} のターンはスキップされました！`);
+    nextIndex = (nextIndex + 1) % room.players.length;
+    nextPlayer = room.players[nextIndex];
+  }
+}
+
+// 勝敗チェック
+if (room.hp[nextPlayer] <= 0) {
+  const winner = room.players.find(id => id !== nextPlayer);
+  io.to(roomId).emit("message", `${room.names[winner]} の勝利！`);
+  io.to(roomId).emit("gameOver", room.names[winner]);
+  delete rooms[roomId];
+  return;
+}
+
+room.turnIndex = nextIndex;
+io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp, room.names);
 
     room.turnIndex = nextIndex;
     io.to(nextPlayer).emit("yourTurn", room.hands[nextPlayer], room.hp, room.names);
