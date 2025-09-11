@@ -4,10 +4,121 @@
 <meta charset="UTF-8">
 <title>ターン制カードゲーム</title>
 <style>
-  body { font-family: sans-serif; }
-  #hand { display: flex; gap: 10px; margin-top: 10px; }
-  .card { padding: 10px; border: 1px solid #000; cursor: pointer; background: #f5f5f5; }
-  #messages { margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; }
+  body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background: linear-gradient(135deg, #ece9e6, #ffffff);
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    color: #333;
+    text-shadow: 1px 1px 2px #aaa;
+  }
+
+  input, button {
+    padding: 8px 12px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  button {
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    background: #45a049;
+  }
+
+  #hand { 
+    display: flex; 
+    gap: 15px; 
+    margin-top: 15px; 
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .card { 
+    padding: 10px; 
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer; 
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 120px;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+  }
+
+  .card img {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .card-label {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  #hpDiv {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hp-bar-container {
+    width: 250px;
+    background: #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .hp-bar {
+    height: 20px;
+    background: linear-gradient(90deg, #ff4d4d, #ff9999);
+    text-align: center;
+    color: white;
+    font-size: 12px;
+    line-height: 20px;
+    transition: width 0.3s ease;
+  }
+
+  #messages { 
+    margin-top: 20px; 
+    max-height: 200px; 
+    overflow-y: auto; 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    background: #fafafa;
+    border-radius: 6px;
+    text-align: left;
+  }
+
+  #messages div {
+    margin: 4px 0;
+    padding: 4px 8px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
 </style>
 </head>
 <body>
@@ -69,48 +180,37 @@ socket.on("updateHP", (hp, names, effects) => {
   hpDiv.innerHTML = "";
   for (const id in hp) {
     const name = names[id] || id;
-    const div = document.createElement("div");
 
-    // 効果ラベルを生成
-    let effectLabels = [];
-    if (effects && effects[id]) {
-      effects[id].forEach(e => {
-        if (e.remaining > 0) {
-          switch (e.card.effect) {
-            case "atkUp": effectLabels.push("攻撃↑"); break;
-            case "atkMultiplier": effectLabels.push(`攻×${e.card.multiplier}`); break;
-            case "shieldUp": effectLabels.push("防御↑"); break;
-            case "shieldMultiplier": effectLabels.push(`防×${e.card.multiplier}`); break;
-            case "skipNextTurn": effectLabels.push("次ターンスキップ"); break;
-            case "multiTurn": effectLabels.push(`${e.remaining}ターン持続`); break;
-            default: effectLabels.push(e.card.effect);
-          }
-        }
-      });
-    }
+    // HPバーを作成
+    const container = document.createElement("div");
+    container.className = "hp-bar-container";
+    const bar = document.createElement("div");
+    bar.className = "hp-bar";
+    const hpValue = Math.max(hp[id], 0);
+    bar.style.width = `${(hpValue/10)*100}%`;
+    bar.textContent = `${name}: HP ${hpValue}`;
+    container.appendChild(bar);
 
-    div.textContent = `${name}: HP ${hp[id]} ${effectLabels.length > 0 ? `(${effectLabels.join(", ")})` : ""}`;
-    hpDiv.appendChild(div);
+    hpDiv.appendChild(container);
   }
 });
 
 // ターン開始
 socket.on("yourTurn", (hand, hp, names) => {
   renderHand(hand);
-  // socket.emit("updateHP", hp, names); ←これ削除
   const div = document.createElement("div");
-  div.textContent = "あなたのターンです。カードを選択してください。";
+  div.textContent = "✨ あなたのターンです。カードを選択してください。";
   messagesDiv.appendChild(div);
 });
 
-
-  socket.on("updateHand", (hand) => {
+// 手札更新
+socket.on("updateHand", (hand) => {
   renderHand(hand);
 });
 
 // ゲーム終了
 socket.on("gameOver", winner => {
-  alert(`ゲーム終了！勝者: ${winner}`);
+  alert(`🎉 ゲーム終了！勝者: ${winner}`);
   handDiv.innerHTML = "";
 });
 
@@ -121,77 +221,18 @@ function renderHand(hand) {
     const div = document.createElement("div");
     div.className = "card";
 
-    // 画像要素
     const img = document.createElement("img");
     img.src = `images/${card.name}.jpg`;  
     img.alt = card.name;
-    img.style.width = "100px";
-    img.style.height = "100px";       // 高さも幅に合わせて正方形
-    img.style.objectFit = "cover";    // 縦横比を保ったまま正方形に収める
-    img.style.display = "block";
+    img.onerror = () => { img.src = "images/default.jpg"; };
 
-    img.onerror = () => {
-      img.src = "images/default.jpg";  // 代替画像
-    };
-
-    // カード説明（ツールチップ用文字列）
-    let displayName = card.display_name || card.name;  // display_name があれば優先
-    let desc = displayName;
-    
-    // 攻撃・回復・防御
-    if (card.damage) desc += ` (攻撃${card.damage})`;
-    if (card.heal) desc += ` (回復${card.heal})`;
-    if (card.shield) desc += ` (防御${card.shield})`;
-    
-    // エフェクト説明
-    if (card.effect) {
-      switch(card.effect) {
-        case "atkUp":
-          desc += " (効果: 攻撃力アップ)";
-          break;
-        case "atkMultiplier":
-          desc += ` (効果: 攻撃力 ×${card.multiplier})`;
-          break;
-        case "shieldUp":
-          desc += " (効果: 防御力アップ)";
-          break;
-        case "shieldMultiplier":
-          desc += ` (効果: 防御力 ×${card.multiplier})`;
-          break;
-        case "skipNextTurn":
-          desc += " (効果: 次のターンスキップ)";
-          break;
-        case "drawCard":
-          desc += ` (効果: カード${card.draw || 1}枚引く)`; // draw プロパティがあれば
-          break;
-        case "swapHand":
-          desc += " (効果: 手札1枚交換)";
-          break;
-        case "multiTurn":
-          desc += ` (効果: ${card.turns}ターン持続効果)`;
-          break;
-        default:
-          desc += ` (効果: ${card.effect})`;
-      }
-    }
-
-    // ツールチップ
-    div.title = desc;
-
-    // --- ラベル表示 ---
     const label = document.createElement("div");
-    label.style.textAlign = "center";
-    label.style.fontSize = "12px";
-    label.style.marginTop = "4px";
-    let labels = [];
-    if (card.damage) labels.push("攻撃");
-    if (card.heal) labels.push("回復");
-    if (card.shield) labels.push("防御");
-    if (card.effect) labels.push("効果");
-    label.textContent = labels.join(" / ");
+    label.className = "card-label";
+    label.textContent = card.display_name || card.name;
+
+    div.appendChild(img);
     div.appendChild(label);
 
-    // クリック時の処理
     div.onclick = () => {
       if (!myRoomId) return;
       socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
@@ -201,7 +242,6 @@ function renderHand(hand) {
       messagesDiv.appendChild(infoDiv);
     };
 
-    div.appendChild(img);
     handDiv.appendChild(div);
   });
 }
