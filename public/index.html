@@ -65,12 +65,31 @@ socket.on("message", msg => {
 });
 
 // HP更新
-socket.on("updateHP", (hp, names) => {
+socket.on("updateHP", (hp, names, effects) => {
   hpDiv.innerHTML = "";
   for (const id in hp) {
     const name = names[id] || id;
     const div = document.createElement("div");
-    div.textContent = `${name}: HP ${hp[id]}`;
+
+    // 効果ラベルを生成
+    let effectLabels = [];
+    if (effects && effects[id]) {
+      effects[id].forEach(e => {
+        if (e.remaining > 0) {
+          switch (e.card.effect) {
+            case "atkUp": effectLabels.push("攻撃↑"); break;
+            case "atkMultiplier": effectLabels.push(`攻×${e.card.multiplier}`); break;
+            case "shieldUp": effectLabels.push("防御↑"); break;
+            case "shieldMultiplier": effectLabels.push(`防×${e.card.multiplier}`); break;
+            case "skipNextTurn": effectLabels.push("次ターンスキップ"); break;
+            case "multiTurn": effectLabels.push(`${e.remaining}ターン持続`); break;
+            default: effectLabels.push(e.card.effect);
+          }
+        }
+      });
+    }
+
+    div.textContent = `${name}: HP ${hp[id]} ${effectLabels.length > 0 ? `(${effectLabels.join(", ")})` : ""}`;
     hpDiv.appendChild(div);
   }
 });
