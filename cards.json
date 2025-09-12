@@ -4,7 +4,7 @@
   { "name": "lightning", "display_name": "ライトニング", "damage": 3 },
   { "name": "phantom_blade", "display_name": "ファントムブレード", "damage": 2, "ignoreShield": true },
 
-  { "name": "heal", "display_name": "ヒール", "heal": 3 },
+  { "name": "Heart", "display_name": "心", "heal": 3 },
   { "name": "recover", "display_name": "リカバー", "heal": 2 },
 
   { "name": "regene", "display_name": "リジェネ", "effect": "multiTurn", "turns": 3, "healPerTurn": 2 },
