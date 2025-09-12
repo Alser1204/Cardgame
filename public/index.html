@@ -119,6 +119,33 @@
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
+  
+  /* ▼ツールチップ追加 */
+.card {
+  position: relative; /* ツールチップの位置基準 */
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+  position: absolute;
+  bottom: 110%; /* カードの上に表示 */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.card:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
 </style>
 </head>
 <body>
@@ -280,19 +307,46 @@ function renderHand(hand) {
   hand.forEach(card => {
     const div = document.createElement("div");
     div.className = "card";
+    div.style.position = "relative";
 
+    // 画像
     const img = document.createElement("img");
     img.src = `images/${card.name}.jpg`;  
     img.alt = card.name;
     img.onerror = () => { img.src = "images/default.jpg"; };
+    div.appendChild(img);
 
+    // カード名
     const label = document.createElement("div");
     label.className = "card-label";
     label.textContent = card.display_name || card.name;
-
-    div.appendChild(img);
     div.appendChild(label);
 
+    // ツールチップ用テキスト作成
+    let desc = `${label.textContent}`;
+    if (card.damage) desc += ` 攻撃:${card.damage}`;
+    if (card.heal) desc += ` 回復:${card.heal}`;
+    if (card.shield) desc += ` 防御:${card.shield}`;
+    if (card.effect) {
+      switch (card.effect) {
+        case "atkUp": desc += " 効果:攻撃アップ"; break;
+        case "atkMultiplier": desc += ` 効果:攻撃×${card.multiplier}`; break;
+        case "shieldUp": desc += " 効果:防御アップ"; break;
+        case "shieldMultiplier": desc += ` 効果:防御×${card.multiplier}`; break;
+        case "skipNextTurn": desc += " 効果:次のターンスキップ"; break;
+        case "drawCard": desc += " 効果:カードを引く"; break;
+        case "swapHand": desc += " 効果:手札を交換"; break;
+        case "multiTurn": desc += ` 効果:${card.turns}ターン持続`; break;
+      }
+    }
+
+    // ツールチップ要素
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    tooltip.textContent = desc;
+    div.appendChild(tooltip);
+
+    // --- クリックでカード使用 ---
     div.onclick = () => {
       if (!myRoomId) return;
       socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
@@ -301,6 +355,21 @@ function renderHand(hand) {
       infoDiv.textContent = "相手のターンです…";
       messagesDiv.appendChild(infoDiv);
     };
+
+    // --- スマホ長押しでツールチップ表示 ---
+    let pressTimer;
+    div.addEventListener("touchstart", () => {
+      pressTimer = setTimeout(() => {
+        tooltip.style.visibility = "visible";
+        tooltip.style.opacity = "1";
+      }, 500); // 0.5秒長押し
+    });
+
+    div.addEventListener("touchend", () => {
+      clearTimeout(pressTimer);
+      tooltip.style.visibility = "hidden";
+      tooltip.style.opacity = "0";
+    });
 
     handDiv.appendChild(div);
   });
