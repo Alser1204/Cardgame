@@ -29,12 +29,11 @@
     "turns": 3
   },
   {
-    "name": "fury_blow",
-    "display_name": "フューリーブロー",
-    "damage": 2,
+    "name": "Infinite Strife",
+    "display_name": "Infinite Strife",
     "effect": "atkMultiplier",
-    "multiplier": 1.5,
-    "turns": 2
+    "multiplier": 2,
+    "turns": 3
   },
   {
     "name": "guard_up",
