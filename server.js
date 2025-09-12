@@ -124,7 +124,7 @@ io.on("connection", (socket) => {
     const opponentName = room.names[opponentId];
 
     // --- 自分にバフ系効果 ---
-    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "regen"].includes(card.effect)) {
+    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "regene"].includes(card.effect)) {
       room.effects[socket.id] = room.effects[socket.id] || [];
       room.effects[socket.id].push({
         card,
