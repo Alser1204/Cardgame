@@ -137,11 +137,29 @@ io.on("connection", (socket) => {
     }
 
     // --- 相手にデバフ系効果 ---
-    if (card.effect === "multiTurn" || card.effect === "poison") {
-      room.effects[opponentId] = room.effects[opponentId] || [];
-      room.effects[opponentId].push({ card, remaining: card.turns });
-      io.to(roomId).emit("message", `${opponentName} に ${card.display_name} が発動！`);
-    }
+    if (card.effect === "multiTurn") {
+  // 回復やシールド → 自分に付与
+  if (card.healPerTurn || card.shieldPerTurn) {
+    room.effects[socket.id] = room.effects[socket.id] || [];
+    room.effects[socket.id].push({ 
+      card, 
+      remaining: card.turns, 
+      healPerTurn: card.healPerTurn || 0,
+      shieldPerTurn: card.shieldPerTurn || 0
+    });
+    io.to(roomId).emit("message", `${myName} に ${card.display_name} が発動！`);
+  }
+  // ダメージ系（毒・ストーム） → 相手に付与
+  if (card.damagePerTurn) {
+    room.effects[opponentId] = room.effects[opponentId] || [];
+    room.effects[opponentId].push({ 
+      card, 
+      remaining: card.turns, 
+      damagePerTurn: card.damagePerTurn 
+    });
+    io.to(roomId).emit("message", `${opponentName} に ${card.display_name} が発動！`);
+  }
+}
 
     if (card.effect === "skipNextTurn") {
       room.effects[opponentId] = room.effects[opponentId] || [];
