@@ -3,7 +3,7 @@ Arcaea's Card Game
 
 jsonファイルの書き方
 
-name:内部で処理する名称
+name:内部で処理する名称(imagesディレクトリに存在する名称とリンクさせる)
 
 display_name:HTMLで実際に表示する名称
 
