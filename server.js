@@ -36,6 +36,7 @@ try {
 const rooms = {};      // ルームごとの情報を格納
 const handSize = 5;    // 初期手札枚数
 const max_HP = 20;     // 最大HP
+const cost = 5;         //初期コスト(未使用)
 
 // ==============================
 // ターン開始時に発動する効果処理
@@ -52,19 +53,13 @@ function applyStartOfTurnEffects(room, playerId) {
   room.effects[playerId].forEach(e => {
     if (e.remaining > 0) {
       // ターンスキップ効果
-      if (e.card.effect === "skipNextTurn") {
+      if (e.skip) {
         skipTurn = true;
       }
       // 継続ダメージや回復
-      if (e.card.effect === "damagePerTurn") {
         dmgThisTurn += e.card.damagePerTurn;
-      }
-      if (e.card.effect === "healPerTurn") {
         healThisTurn += e.card.healPerTurn;
-      }
-      if (e.card.effect === "shieldPerTurn") {
         shieldThisTurn += e.card.shieldPerTurn;
-      }
       // バフ効果（atkUp, shieldUpなど）は残存ターン管理のみ
       if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier"].includes(e.card.effect)) {
         // ここでは数値の更新はせず、残りターンだけ減らす
@@ -89,7 +84,7 @@ function applyStartOfTurnEffects(room, playerId) {
   // 残りターンが0の効果は削除
   room.effects[playerId] = room.effects[playerId].filter(e => e.remaining > 0);
 
-  return { skipTurn, dmgThisTurn, healThisTurn };
+  return { skipTurn, dmgThisTurn, healThisTurn, shieldThisTurn};
 }
 
 // ==============================
@@ -135,7 +130,7 @@ io.on("connection", (socket) => {
     // プレイヤー情報を追加
     room.players.push(socket.id);
     room.hands[socket.id] = room.deck.splice(0, handSize);
-    room.hp[socket.id] = 10;
+    room.hp[socket.id] = max_HP;
     room.shield[socket.id] = 0;
 
     socket.join(roomId);
@@ -220,7 +215,7 @@ io.on("connection", (socket) => {
     // --- ターンスキップ効果 ---
     if (card.effect === "skipNextTurn") {
       room.effects[opponentId] = room.effects[opponentId] || [];
-      room.effects[opponentId].push({ card, remaining: card.turns, skip: true });
+      room.effects[opponentId].push({ card, remaining: 1, skip: true });
       io.to(roomId).emit("message", `${opponentName} の次のターンがスキップされます！`);
     }
 
@@ -254,20 +249,20 @@ io.on("connection", (socket) => {
       room.hp[opponentId] -= dmg;
       if (!card.ignoreShield) room.shield[opponentId] = 0;
 
-      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
+      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
     }
 
     // --- 回復処理 ---
     if (card.heal) {
       room.hp[socket.id] += card.heal;
-      if (room.hp[socket.id] > 10) room.hp[socket.id] = 10;
-      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 自分のHPを ${card.heal} 回復`);
+      if (room.hp[socket.id] > max_HP) room.hp[socket.id] = max_HP;
+      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ 自分のHPを ${card.heal} 回復`);
     }
 
     // --- 即時防御カード ---
     if (card.shield) {
       room.shield[socket.id] = card.shield;
-      io.to(roomId).emit("message", `${myName} が ${card.name} をプレイ！ 次のターンの被ダメを ${card.shield} 軽減`);
+      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ 次のターンの被ダメを ${card.shield} 軽減`);
     }
 
     // --- ドロー効果 ---
@@ -322,8 +317,11 @@ io.on("connection", (socket) => {
       if (effectResult.healThisTurn > 0) {
         io.to(roomId).emit("message", `${room.names[nextPlayer]} は効果で ${effectResult.healThisTurn} 回復した！`);
       }
+      if (effectResult.shieldThisTurn > 0) {
+        io.to(roomId).emit("message", `${room.names[nextPlayer]} は効果で ${effectResult.shieldThisTurn} のシールドを獲得した！`);
+      }
       if (effectResult.skipTurn) {
-        io.to(roomId).emit("message", `${room.names[nextPlayer]} のターンはスキップされました！`);
+        io.to(roomId).emit("message", `${room.names[nextPlayer]} のターンはスキップされました！`); //スキップは仕様として消すかもしれない
         nextIndex = (nextIndex + 1) % room.players.length;
         nextPlayer = room.players[nextIndex];
       }
@@ -368,5 +366,5 @@ io.on("connection", (socket) => {
 // ==============================
 // サーバー起動
 // ==============================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`listening on *:${PORT}`));
