@@ -1,0 +1,345 @@
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      /* 縦並び */
+      align-items: center;
+      /* 中央寄せ */
+      gap: 20px;
+      /* 上下の余白 */
+    }
+
+    /* メイン＋サイドの横並びコンテナ */
+    #wrapper {
+      display: flex;
+      /* 横並び */
+      gap: 20px;
+      /* main と side の間の余白 */
+      align-items: flex-start;
+      /* 上を揃える */
+      justify-content: center;
+      /* 全体を中央に寄せる */
+      width: 100%;
+      max-width: 1200px;
+      /* 横幅を制限（中央寄せが見やすくなる） */
+    }
+
+    /* 左側メイン部分 */
+    #main-container {
+      flex: 0 0 75%;
+      /* 横幅の75%を使用 */
+      padding-left: 2%;
+      box-sizing: border-box;
+      align-items: center;     /* 中身を中央揃えに */
+      text-align: center;      /* テキストも中央 */
+    }
+
+    /* 右側サイドパネル部分 */
+    #side-panel {
+      flex: 0 0 25%;
+      background: #fafafa;
+      color: Black;
+      border-left: 2px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+      align-items: center;     /* 中身を中央揃えに */
+      text-align: center;      /* テキストも中央 */
+    }
+
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+      text-shadow: 1px 1px 2px #aaa;
+    }
+
+    input,
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    #hand {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      padding: 10px;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 120px;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .card img {
+      width: 100%;
+      height: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .card-label {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    #hpDiv {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hp-bar-container {
+      width: 500px;
+      background: #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .hp-bar {
+      height: 20px;
+      background: linear-gradient(90deg, #ff4d4d, #ff9999);
+      text-align: center;
+      color: white;
+      font-size: 12px;
+      line-height: 20px;
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: visible;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    /* バー中央のHPテキスト */
+    .hp-bar-container span {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      color: #333;
+      /* バー上でも見やすい色に調整可能 */
+      pointer-events: none;
+      /* クリックを邪魔しない */
+    }
+
+    /* HP値テキストを上に重ねる */
+    .hp-bar::after {
+      content: none;
+      /*content: attr(data-text);
+      position: absolute;
+      left: 50%;
+      top: -22px; /* バーの上に表示 */
+      /*transform: translateX(-50%);
+      font-weight: bold;
+      color: #333;*/
+    }
+
+
+    #messages {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    #messages div {
+      margin: 4px 0;
+      padding: 4px 8px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    #messageWindow {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    #messageWindow div {
+      margin: 4px 0;
+      padding: 4px 8px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ▼ツールチップ追加 */
+    .card {
+      position: relative;
+      /* ツールチップの位置基準 */
+    }
+
+    .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.2s;
+      position: absolute;
+      bottom: 110%;
+      /* カードの上に表示 */
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .card:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* 左上メニュー */
+    .menu {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
+
+    .menu-button {
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: bold;
+    }
+
+    .menu-button:hover {
+      background: #555;
+    }
+
+    .menu-content {
+      display: none;
+      margin-top: 8px;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /*.menu:hover .menu-content {
+      display: flex;
+    }*/
+
+    .tab {
+      background: #eee;
+      color: #333;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tab:hover {
+      background: #ddd;
+    }
+
+    .menu-content {
+      display: none;
+      margin-top: 8px;
+      flex-direction: column;
+      gap: 5px;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: all 0.2s ease;
+    }
+
+    .menu-content.show {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #confirmBox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #confirmBox.hidden {
+      display: none;
+    }
+
+    .confirm-content {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .confirm-content button {
+      margin: 10px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #yesBtn {
+      background: #e74c3c;
+      color: white;
+    }
+
+    #noBtn {
+      background: #bdc3c7;
+    }
