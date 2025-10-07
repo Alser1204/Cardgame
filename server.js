@@ -187,7 +187,7 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("message", `${myName} に ${card.turns} ターンの ${card.display_name} 効果が発動！`);
     }
 
-    // --- 相手にデバフ系効果（継続系） ---
+    // --- 継続効果 ---
     if (card.effect === "multiTurn") {
       // 自分に付与（リジェネや防御）
       if (card.healPerTurn || card.shieldPerTurn) {
@@ -270,7 +270,7 @@ io.on("connection", (socket) => {
       const drawn = room.deck.splice(0,1)[0];
       room.hands[socket.id].push(drawn);
       io.to(socket.id).emit("updateHand", room.hands[socket.id]);
-      io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
+      io.to(socket.id).emit("playerMessage", `山札からカードを1枚引きました: ${drawn.display_name}`);
     }
 
     // --- 手札交換効果 ---
@@ -287,7 +287,7 @@ io.on("connection", (socket) => {
     if (room.deck.length > 0 && room.hands[socket.id].length < handSize) {
       const drawn = room.deck.splice(0, 1)[0];
       room.hands[socket.id].push(drawn);
-      io.to(socket.id).emit("message", `山札からカードを1枚引きました: ${drawn.name}`);
+      io.to(socket.id).emit("playerMessage", `山札からカードを1枚引きました: ${drawn.display_name}`);
     }
 
     // HPや効果の更新を全員に送信
@@ -366,5 +366,5 @@ io.on("connection", (socket) => {
 // ==============================
 // サーバー起動
 // ==============================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`listening on *:${PORT}`));
