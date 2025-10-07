@@ -1,219 +1,96 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
   <meta charset="UTF-8">
-  <title>ターン制カードゲーム</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #ece9e6, #ffffff);
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-      color: #333;
-      text-shadow: 1px 1px 2px #aaa;
-    }
-
-    input,
-    button {
-      padding: 8px 12px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button {
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    #hand {
-      display: flex;
-      gap: 15px;
-      margin-top: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .card {
-      padding: 10px;
-      border-radius: 10px;
-      background: white;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      width: 120px;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .card img {
-      width: 100%;
-      height: 120px;
-      border-radius: 8px;
-      object-fit: cover;
-    }
-
-    .card-label {
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      color: #555;
-    }
-
-    #hpDiv {
-      margin-top: 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .hp-bar-container {
-      width: 500px;
-      background: #ddd;
-      border-radius: 8px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-    }
-
-    .hp-bar {
-      height: 20px;
-      background: linear-gradient(90deg, #ff4d4d, #ff9999);
-      text-align: center;
-      color: white;
-      font-size: 12px;
-      line-height: 20px;
-      transition: width 0.3s ease;
-      position: relative;
-      overflow: visible;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-    }
-
-    /* バー中央のHPテキスト */
-    .hp-bar-container span {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-weight: bold;
-      color: #333; /* バー上でも見やすい色に調整可能 */
-      pointer-events: none;  /* クリックを邪魔しない */
-    }
-
-    /* HP値テキストを上に重ねる */
-    .hp-bar::after {
-      content: none;
-      /*content: attr(data-text);
-      position: absolute;
-      left: 50%;
-      top: -22px; /* バーの上に表示 */
-      /*transform: translateX(-50%);
-      font-weight: bold;
-      color: #333;*/
-    }
-
-
-    #messages {
-      margin-top: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      background: #fafafa;
-      border-radius: 6px;
-      text-align: left;
-    }
-
-    #messages div {
-      margin: 4px 0;
-      padding: 4px 8px;
-      background: #fff;
-      border-radius: 4px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    /* ▼ツールチップ追加 */
-    .card {
-      position: relative;
-      /* ツールチップの位置基準 */
-    }
-
-    .tooltip {
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity 0.2s;
-      position: absolute;
-      bottom: 110%;
-      /* カードの上に表示 */
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 10;
-    }
-
-    .card:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
-    }
-  </style>
+  <title>Arcaea カードゲーム</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <h1>ターン制カードゲーム</h1>
-
-  <div>
-    名前: <input type="text" id="nameInput" placeholder="名前を入力">
-    <button id="setNameBtn">設定</button>
+  <!-- 左上ホバー式メニュー -->
+  <div class="menu">
+    <div class="menu-button" onclick="toggleMenu()">☰</div>
+    <div class="menu-content" id="menuContent">
+      <div class="tab" onclick="alert('カード一覧予定');">カード一覧</div>
+      <div class="tab" onclick="alert('ルール説明予定');">ルール</div>
+      <div class="tab" onclick="alert('設定予定');">設定</div>
+    </div>
   </div>
 
-  <div>
-    ルームID: <input type="text" id="roomInput" placeholder="room1">
-    <button id="joinBtn">参加</button>
+  <h1>Arcaea カードゲーム</h1>
+
+  <div id="wrapper">
+    <div id="main-container">
+      <div>
+        名前: <input type="text" id="nameInput" placeholder="名前を入力">
+        <button id="setNameBtn">設定</button>
+      </div>
+
+      <div>
+        ルームID: <input type="text" id="roomInput" placeholder="room1">
+        <button id="joinBtn">参加</button>
+      </div>
+
+      <h3>手札</h3>
+      <div id="hand"></div>
+
+      <div>
+        <button id="endTurnBtn">ターン終了</button>
+      </div>
+
+      <h3>HP</h3>
+      <div id="hpDiv"></div>
+    </div>
+
+    <div id="side-panel">
+      <h3>サイドメッセージ</h3>
+      <div id="messageWindow"></div>
+    </div>
   </div>
-
-  <h3>手札</h3>
-  <div id="hand"></div>
-
-  <h3>HP</h3>
-  <div id="hpDiv"></div>
 
   <h3>メッセージ</h3>
   <div id="messages"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+
+    //メニュータブ
+    let menuOpen = false;
+
+    function toggleMenu() {
+      const menu = document.getElementById("menuContent");
+      menuOpen = !menuOpen;
+
+      if (menuOpen) {
+        menu.classList.add("show");
+      } else {
+        menu.classList.remove("show");
+      }
+    }
+
+    // --- メニュー内クリックでは外クリック処理を無効化 ---
+    document.getElementById("menuContent").addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    // --- メニュー外クリックで閉じる処理 ---
+    document.addEventListener("click", (e) => {
+      const menu = document.querySelector(".menu");
+      if (!menu.contains(e.target)) {
+        const menuContent = document.getElementById("menuContent");
+        menuContent.classList.remove("show");
+        menuOpen = false;
+      }
+    });
+
     const socket = io();
     let myRoomId = null;
 
     // 要素
     const handDiv = document.getElementById("hand");
     const messagesDiv = document.getElementById("messages");
+    const messageWindowDiv = document.getElementById("messageWindow");
     const hpDiv = document.getElementById("hpDiv");
 
     // 名前設定
@@ -230,12 +107,52 @@
       socket.emit("joinRoom", roomId);
     };
 
+    //ターン終了確認
+    document.addEventListener("DOMContentLoaded", () => {
+      const confirmBox = document.getElementById("confirmBox");
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const endBtn = document.getElementById("endTurnBtn");
+
+      endBtn.onclick = () => {
+        confirmBox.classList.remove("hidden");
+      };
+
+      yesBtn.onclick = () => {
+        confirmBox.classList.add("hidden");
+        if (myRoomId) socket.emit("endTurn", { roomId: myRoomId });
+        const msg = document.createElement("div");
+        msg.textContent = "あなたのターンを終了しました。";
+        messagesDiv.appendChild(msg);
+      };
+
+      noBtn.onclick = () => {
+        confirmBox.classList.add("hidden");
+      };
+    });
+
+
+    //ターン終了
+    /*document.getElementById("turnEnd").onclick = () => {
+      const roomId = document.getElementById("roomInput").value.trim();
+      if (!roomId) return;
+      myRoomId = roomId;
+      socket.emit("joinRoom", roomId);
+    };*/
+
     // メッセージ受信
     socket.on("message", msg => {
       const div = document.createElement("div");
       div.textContent = msg;
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    socket.on("playerMessage", msg => {
+      const div = document.createElement("div");
+      div.textContent = msg;
+      messageWindowDiv.appendChild(div);
+      messageWindowDiv.scrollTop = messageWindowDiv.scrollHeight;
     });
 
     // HP更新
@@ -302,19 +219,19 @@
                   //badge.style.background = "#8e44ad"; // 紫
                   break;
                 case "multiTurn":
-                  if(e.card.healPerTurn){
+                  if (e.card.healPerTurn) {
                     badge.textContent = `${e.card.display_name || e.card.name}${e.card.healPerTurn}(${e.remaining})`;
                     badge.style.background = "#27ae60"; // 緑
                   }
-                  else if(e.card.shieldPerTurn){
+                  else if (e.card.shieldPerTurn) {
                     badge.textContent = `${e.card.display_name || e.card.name}${e.card.shieldPerTurn}(${e.remaining})`;
                     badge.style.background = "#ADD8E6"; // 薄い青
                   }
-                  else if(e.card.damagePerTurn){
+                  else if (e.card.damagePerTurn) {
                     badge.textContent = `${e.card.display_name || e.card.name}${e.card.damagePerTurn}(${e.remaining})`;
                     badge.style.background = "#800080"; // 紫
                   }
-                  else{
+                  else {
                     div.textContent = "カード効果未定義エラー";
                   }
                   break;
@@ -339,7 +256,7 @@
       renderHand(hand);
       const div = document.createElement("div");
       div.textContent = "✨ あなたのターンです。カードを選択してください。";
-      messagesDiv.appendChild(div);
+      messageWindowDiv.appendChild(div);
     });
 
     // 手札更新
@@ -354,103 +271,114 @@
     });
 
     // 手札描画（相手ターンでも常に見える・新しいカードも即反映）
-function renderHand(hand) {
-  // いったん全削除して再描画
-  handDiv.innerHTML = "";
+    function renderHand(hand) {
+      // いったん全削除して再描画
+      handDiv.innerHTML = "";
 
-  hand.forEach((card, i) => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.style.position = "relative";
-    div.style.opacity = "0";
-    div.style.transform = "scale(0.9)";
-    div.style.transition = "all 0.3s ease";
+      hand.forEach((card, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.style.position = "relative";
+        div.style.opacity = "0";
+        div.style.transform = "scale(0.9)";
+        div.style.transition = "all 0.3s ease";
 
-    // カード画像
-    const img = document.createElement("img");
-    img.src = `images/${card.name}.jpg`;
-    img.alt = card.name;
-    img.onerror = () => { img.src = "images/default.jpg"; };
-    div.appendChild(img);
+        // カード画像
+        const img = document.createElement("img");
+        img.src = `images/${card.name}.jpg`;
+        img.alt = card.name;
+        img.onerror = () => { img.src = "images/default.jpg"; };
+        div.appendChild(img);
 
-    // カード名
-    const label = document.createElement("div");
-    label.className = "card-label";
-    label.textContent = card.display_name || card.name;
-    div.appendChild(label);
+        // カード名
+        const label = document.createElement("div");
+        label.className = "card-label";
+        label.textContent = card.display_name || card.name;
+        div.appendChild(label);
 
-    // ツールチップ説明文を作成
-    let desc = `${label.textContent}`;
-    if (card.damage) desc += ` 攻撃:${card.damage}`;
-    if (card.heal) desc += ` 回復:${card.heal}`;
-    if (card.shield) desc += ` 防御:${card.shield}`;
-    if (card.effect) {
-      switch (card.effect) {
-        case "atkUp": desc += " 効果:攻撃アップ"; break;
-        case "atkMultiplier": desc += ` 効果:攻撃×${card.multiplier}`; break;
-        case "shieldUp": desc += " 効果:防御アップ"; break;
-        case "shieldMultiplier": desc += ` 効果:防御×${card.multiplier}`; break;
-        case "skipNextTurn": desc += " 効果:次のターンスキップ"; break;
-        case "drawCard": desc += " 効果:カードを引く"; break;
-        case "swapHand": desc += " 効果:手札を交換"; break;
-        case "multiTurn": desc += ` 効果:${card.turns}ターン持続`; break;
-      }
+        // ツールチップ説明文を作成
+        let desc = `${label.textContent}`;
+        if (card.damage) desc += ` 攻撃:${card.damage}`;
+        if (card.heal) desc += ` 回復:${card.heal}`;
+        if (card.shield) desc += ` 防御:${card.shield}`;
+        if (card.effect) {
+          switch (card.effect) {
+            case "atkUp": desc += " 効果:攻撃アップ"; break;
+            case "atkMultiplier": desc += ` 効果:攻撃×${card.multiplier}`; break;
+            case "shieldUp": desc += " 効果:防御アップ"; break;
+            case "shieldMultiplier": desc += ` 効果:防御×${card.multiplier}`; break;
+            case "skipNextTurn": desc += " 効果:次のターンスキップ"; break;
+            case "drawCard": desc += " 効果:カードを引く"; break;
+            case "swapHand": desc += " 効果:手札を交換"; break;
+            case "multiTurn": desc += ` 効果:${card.turns}ターン持続`; break;
+          }
+        }
+
+        // ツールチップ要素
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        tooltip.textContent = desc;
+        div.appendChild(tooltip);
+
+        // --- カード使用時 ---
+        div.onclick = () => {
+          if (!myRoomId) return;
+
+          // サーバーにカード使用を送信
+          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
+
+          // ✅ 相手ターン中も手札を見られるようにするため、消さない
+          // handDiv.innerHTML = "";
+
+          // ✅ 代わりに使ったカードをグレーアウトして選べなくする
+          div.style.opacity = "0.5";
+          div.style.pointerEvents = "none";
+
+          // メッセージ追加
+          socket.on("notYourTurn", () => {
+            const infoDiv = document.createElement("div");
+            infoDiv.textContent = "相手のターンです…";
+            messageWindowDiv.appendChild(infoDiv);
+            messageWindowDiv.scrollTop = messagesDiv.scrollHeight;
+          });
+        };
+
+        // --- スマホ長押しでツールチップ表示 ---
+        let pressTimer;
+        div.addEventListener("touchstart", () => {
+          pressTimer = setTimeout(() => {
+            tooltip.style.visibility = "visible";
+            tooltip.style.opacity = "1";
+          }, 500); // 0.5秒長押しで表示
+        });
+
+        div.addEventListener("touchend", () => {
+          clearTimeout(pressTimer);
+          tooltip.style.visibility = "hidden";
+          tooltip.style.opacity = "0";
+        });
+
+        // カードを手札に追加
+        handDiv.appendChild(div);
+
+        // ✅ フェードイン演出（順にふわっと表示）
+        setTimeout(() => {
+          div.style.opacity = "1";
+          div.style.transform = "scale(1)";
+        }, 100 * i);
+      });
     }
 
-    // ツールチップ要素
-    const tooltip = document.createElement("div");
-    tooltip.className = "tooltip";
-    tooltip.textContent = desc;
-    div.appendChild(tooltip);
-
-    // --- カード使用時 ---
-    div.onclick = () => {
-      if (!myRoomId) return;
-
-      // サーバーにカード使用を送信
-      socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
-
-      // ✅ 相手ターン中も手札を見られるようにするため、消さない
-      // handDiv.innerHTML = "";
-
-      // ✅ 代わりに使ったカードをグレーアウトして選べなくする
-      div.style.opacity = "0.5";
-      div.style.pointerEvents = "none";
-
-      // メッセージ追加
-      const infoDiv = document.createElement("div");
-      infoDiv.textContent = "相手のターンです…";
-      messagesDiv.appendChild(infoDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    };
-
-    // --- スマホ長押しでツールチップ表示 ---
-    let pressTimer;
-    div.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(() => {
-        tooltip.style.visibility = "visible";
-        tooltip.style.opacity = "1";
-      }, 500); // 0.5秒長押しで表示
-    });
-
-    div.addEventListener("touchend", () => {
-      clearTimeout(pressTimer);
-      tooltip.style.visibility = "hidden";
-      tooltip.style.opacity = "0";
-    });
-
-    // カードを手札に追加
-    handDiv.appendChild(div);
-
-    // ✅ フェードイン演出（順にふわっと表示）
-    setTimeout(() => {
-      div.style.opacity = "1";
-      div.style.transform = "scale(1)";
-    }, 100 * i);
-  });
-}
-
   </script>
+
+  <div id="confirmBox" class="hidden">
+    <div class="confirm-content">
+      <p>本当にターンを終了しますか？</p>
+      <button id="yesBtn">はい</button>
+      <button id="noBtn">キャンセル</button>
+    </div>
+  </div>
+
 </body>
 
 </html>
