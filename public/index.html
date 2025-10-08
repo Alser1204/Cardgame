@@ -12,48 +12,84 @@
   <div class="menu">
     <div class="menu-button" onclick="toggleMenu()">☰</div>
     <div class="menu-content" id="menuContent">
-      <div class="tab" onclick="alert('カード一覧予定');">カード一覧</div>
+      <!-- ▼ 名前設定 -->
+      <div class="tab" onclick="toggleNameBox()">名前設定</div>
+      <div id="nameBox" class="hidden" style="display:flex; align-items:center; gap:4px;">
+        <input type="text" id="nameInput" placeholder="名前を入力" style="width:120px;">
+        <button id="setNameBtn">設定</button>
+      </div>
+
+      <!-- ▼ ルーム参加 -->
+      <div class="tab" onclick="toggleJoinBox()">ルーム参加</div>
+      <div id="joinBox" class="hidden" style="display:flex; align-items:center; gap:4px;">
+        <input type="text" id="roomInput" placeholder="ルームID" style="width:120px;">
+        <button id="joinBtn">参加</button>
+      </div>
+
+      <div class="tab" onclick="showCardList(cardList)">カード一覧</div>
+      <!-- カード一覧表示用 -->
+      <div id="cardListContainer" class="hidden">
+        <!-- 検索ボックス -->
+        <input type="text" id="cardSearch" placeholder="検索" style="width:100%; margin-bottom:8px;">
+        <div id="cardNameList" style="display:flex; flex-direction:column; gap:4px;"></div>
+        <div id="cardDetail" style="margin-top:20px;"></div>
+      </div>
       <div class="tab" onclick="alert('ルール説明予定');">ルール</div>
-      <div class="tab" onclick="alert('設定予定');">設定</div>
+      <div class="tab" onclick="alert('設定予定だけど設定することあるか？');">設定</div>
     </div>
   </div>
 
   <h1>Arcaea カードゲーム</h1>
 
-  <div id="wrapper">
-    <div id="main-container">
-      <div>
-        名前: <input type="text" id="nameInput" placeholder="名前を入力">
-        <button id="setNameBtn">設定</button>
-      </div>
-
-      <div>
-        ルームID: <input type="text" id="roomInput" placeholder="room1">
-        <button id="joinBtn">参加</button>
-      </div>
-
-      <h3>手札</h3>
-      <div id="hand"></div>
-
-      <div>
-        <button id="endTurnBtn">ターン終了</button>
-      </div>
-
-      <h3>HP</h3>
-      <div id="hpDiv"></div>
-    </div>
-
-    <div id="side-panel">
-      <h3>サイドメッセージ</h3>
-      <div id="messageWindow"></div>
-    </div>
+  <div id="intro">
+    <p>ようこそ！<br>左上の ☰ メニュー から名前を設定し、ルームに参加してください。</p>
   </div>
 
-  <h3>メッセージ</h3>
-  <div id="messages"></div>
+
+  <!--
+  <div>
+    名前: <input type="text" id="nameInput" placeholder="名前を入力">
+    <button id="setNameBtn">設定</button>
+  </div>
+
+  <div>
+    ルームID: <input type="text" id="roomInput" placeholder="room1">
+    <button id="joinBtn">参加</button>
+  </div>
+  -->
+
+  <div id="entered-room">
+    <div id="mid-section">
+      <div id="side-panel">
+        <h3>サイドメッセージ</h3>
+        <div id="messageWindow"></div>
+        <h3>コスト：5/5(後で実装)</h3>
+        <div>
+          <button id="endTurnBtn">ターン終了</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="playedCardContainer"></div>
+
+    <h3>手札</h3>
+    <div id="hand"></div>
+
+    <h3>HP</h3>
+    <div id="hpDiv"></div>
+
+    <h3>メッセージ</h3>
+    <div id="messages"></div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+
+    // 初期状態：ゲームエリア非表示
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("entered-room").classList.add("hidden");
+    });
+
 
     //メニュータブ
     let menuOpen = false;
@@ -84,6 +120,66 @@
       }
     });
 
+    let cardList = []; // JSONから読み込むカードデータを保持
+
+    function showCardList(filteredCards = null) {
+      const container = document.getElementById("cardListContainer");
+      container.classList.remove("hidden");
+
+      const cardsToRender = filteredCards || cardList;
+      const nameListDiv = document.getElementById("cardNameList");
+      nameListDiv.innerHTML = "";
+
+      cardsToRender.forEach(card => {
+        const btn = document.createElement("cardListButton"); // 修正
+        btn.textContent = card.display_name || card.name;
+        btn.style.textAlign = "left";
+
+        // 詳細表示用 div をカード名の下に作る
+        const detailDiv = document.createElement("div");
+        detailDiv.style.marginLeft = "20px";
+        detailDiv.style.display = "none";
+
+        btn.onclick = () => {
+          if (detailDiv.style.display === "none") {
+            detailDiv.innerHTML = `
+          <img src="images/${card.name}.jpg" alt="${card.name}" style="width:150px;">
+          <p>効果: ${card.effect || "なし"}</p>
+          <p>攻撃: ${card.damage || 0}, 防御: ${card.shield || 0}, 回復: ${card.heal || 0}</p>
+        `;
+            detailDiv.style.display = "block";
+          } else {
+            detailDiv.style.display = "none";
+          }
+        };
+
+        nameListDiv.appendChild(btn);
+        nameListDiv.appendChild(detailDiv);
+      });
+    }
+
+    // 検索
+    document.getElementById("cardSearch").addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase();
+      if (!query) {
+        showCardList();
+        return;
+      }
+      const filteredCards = cardList.filter(card =>
+        (card.display_name || card.name).toLowerCase().includes(query)
+      );
+      showCardList(filteredCards);
+    });
+
+    // 初回カード読み込み
+    fetch("cards.json")
+      .then(res => res.json())
+      .then(cards => cardList = cards)
+      .catch(err => console.error("カード一覧読み込み失敗:", err));
+
+
+
+
     const socket = io();
     let myRoomId = null;
 
@@ -92,6 +188,17 @@
     const messagesDiv = document.getElementById("messages");
     const messageWindowDiv = document.getElementById("messageWindow");
     const hpDiv = document.getElementById("hpDiv");
+
+    function toggleNameBox() {
+      const box = document.getElementById("nameBox");
+      box.classList.toggle("hidden");
+    }
+
+    function toggleJoinBox() {
+      const box = document.getElementById("joinBox");
+      box.classList.toggle("hidden");
+    }
+
 
     // 名前設定
     document.getElementById("setNameBtn").onclick = () => {
@@ -105,7 +212,12 @@
       if (!roomId) return;
       myRoomId = roomId;
       socket.emit("joinRoom", roomId);
+
+      // 案内文を非表示、ゲームUIを表示
+      document.getElementById("intro").classList.add("hidden");
+      document.getElementById("entered-room").classList.remove("hidden");
     };
+
 
     //ターン終了確認
     document.addEventListener("DOMContentLoaded", () => {
@@ -199,19 +311,19 @@
 
               switch (e.card.effect) {
                 case "atkUp":
-                  badge.textContent = `攻撃+${e.card.damageBoost}(${e.remaining})`;
+                  badge.textContent = `攻+${e.card.damageBoost}（${e.remaining}）`;
                   badge.style.background = "#e74c3c"; // 赤
                   break;
                 case "atkMultiplier":
-                  badge.textContent = `攻×${e.card.multiplier}(${e.remaining})`;
+                  badge.textContent = `攻×${e.card.multiplier}（${e.remaining}）`;
                   badge.style.background = "#c0392b"; // 濃赤
                   break;
                 case "shieldUp":
-                  badge.textContent = `防御+${e.card.shieldBoost}(${e.remaining})`;
+                  badge.textContent = `防+${e.card.shieldBoost}（${e.remaining}）`;
                   badge.style.background = "#3498db"; // 青
                   break;
                 case "shieldMultiplier":
-                  badge.textContent = `防×${e.card.multiplier}`;
+                  badge.textContent = `防×${e.card.multiplier}（${e.remaining}）`;
                   badge.style.background = "#2980b9"; // 濃青
                   break;
                 case "skipNextTurn":
@@ -220,15 +332,15 @@
                   break;
                 case "multiTurn":
                   if (e.card.healPerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.healPerTurn}(${e.remaining})`;
+                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.healPerTurn}（${e.remaining}）`;
                     badge.style.background = "#27ae60"; // 緑
                   }
                   else if (e.card.shieldPerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.shieldPerTurn}(${e.remaining})`;
+                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.shieldPerTurn}（${e.remaining}）`;
                     badge.style.background = "#ADD8E6"; // 薄い青
                   }
                   else if (e.card.damagePerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.damagePerTurn}(${e.remaining})`;
+                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.damagePerTurn}（${e.remaining}）`;
                     badge.style.background = "#800080"; // 紫
                   }
                   else {
@@ -268,6 +380,52 @@
     socket.on("gameOver", winner => {
       alert(`🎉 ゲーム終了！勝者: ${winner}`);
       handDiv.innerHTML = "";
+    });
+
+    // --- カード使用時演出関数 ---
+    function showPlayedCard(cardName) {
+      const container = document.getElementById("playedCardContainer");
+      container.innerHTML = ""; // 前のカード消去
+
+      const img = document.createElement("img");
+      img.src = `images/${cardName}.jpg`;
+      img.alt = cardName;
+      img.onerror = () => { img.src = "images/default.jpg"; };
+      container.appendChild(img);
+
+      // フェードイン
+      setTimeout(() => {
+        img.style.opacity = "1";
+        img.style.transform = "scale(1)";
+      }, 50);
+
+      // 1.5秒後にフェードアウト
+      setTimeout(() => {
+        img.style.opacity = "0";
+        img.style.transform = "scale(0.8)";
+      }, 1500);
+
+      // 2秒後に完全消去
+      setTimeout(() => {
+        container.innerHTML = "";
+      }, 2000);
+    }
+
+    // メッセージ追加
+    socket.on("notYourTurn", () => {
+      const infoDiv = document.createElement("div");
+      infoDiv.textContent = "相手のターンです…";
+      messageWindowDiv.appendChild(infoDiv);
+      messageWindowDiv.scrollTop = messagesDiv.scrollHeight;
+      return;
+    });
+
+    // 他プレイヤーがカード使用したとき
+    socket.on("cardPlayed", ({ playerName, cardName }) => {
+      const msgDiv = document.createElement("div");
+
+      // 大きく表示
+      showPlayedCard(cardName);
     });
 
     // 手札描画（相手ターンでも常に見える・新しいカードも即反映）
@@ -324,24 +482,25 @@
         div.onclick = () => {
           if (!myRoomId) return;
 
-          // サーバーにカード使用を送信
-          socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
+          if (!div.classList.contains("used")) {
+            socket.emit("playCard", { roomId: myRoomId, cardName: card.name });
 
-          // ✅ 相手ターン中も手札を見られるようにするため、消さない
-          // handDiv.innerHTML = "";
+            // 手札カードを半透明・操作不可
+            div.style.opacity = "0.5";
+            div.style.pointerEvents = "none";
+            div.classList.add("used");
 
-          // ✅ 代わりに使ったカードをグレーアウトして選べなくする
-          div.style.opacity = "0.5";
-          div.style.pointerEvents = "none";
 
-          // メッセージ追加
-          socket.on("notYourTurn", () => {
-            const infoDiv = document.createElement("div");
-            infoDiv.textContent = "相手のターンです…";
-            messageWindowDiv.appendChild(infoDiv);
-            messageWindowDiv.scrollTop = messagesDiv.scrollHeight;
-          });
+
+            // 大きく表示
+            //showPlayedCard(card.name);
+          }
+
         };
+
+
+
+
 
         // --- スマホ長押しでツールチップ表示 ---
         let pressTimer;
