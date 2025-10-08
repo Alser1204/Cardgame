@@ -1,0 +1,58 @@
+[
+  { "name": "fire", "display_name": "ファイア", "damage": 2 },
+  { "name": "slash", "display_name": "スラッシュ", "damage": 1 },
+  { "name": "lightning", "display_name": "ライトニング", "damage": 3 },
+  { "name": "phantom_blade", "display_name": "ファントムブレード", "damage": 2, "ignoreShield": true },
+
+  { "name": "Heart", "display_name": "心", "heal": 3 },
+  { "name": "recover", "display_name": "リカバー", "heal": 2 },
+
+  { "name": "regene", "display_name": "リジェネ", "effect": "multiTurn", "turns": 3, "healPerTurn": 2 },
+
+  { "name": "guard", "display_name": "ガード", "shield": 2 },
+  { "name": "magic_barrier", "display_name": "マジックバリア", "effect": "multiTurn", "turns": 2, "shieldPerTurn": 2 },
+
+  { "name": "freeze", "display_name": "フリーズ", "damage": 1, "effect": "skipNextTurn" },
+  { "name": "storm", "display_name": "ストーム", "effect": "multiTurn", "turns": 2, "damagePerTurn": 1 },
+
+  { "name": "draw", "display_name": "ドロー", "effect": "drawCard" },
+  { "name": "swap", "display_name": "スワップ", "effect": "swapHand" },
+
+  { "name": "killer_strike", "display_name": "殺す攻撃", "damage": 30 },
+
+  {
+    "name": "power_strike",
+    "display_name": "パワーストライク",
+    "damage": 3,
+    "effect": "atkUp",
+    "damageBoost": 2,
+    "turns": 3
+  },
+  {
+    "name": "Infinite Strife",
+    "display_name": "Infinite Strife",
+    "effect": "atkMultiplier",
+    "multiplier": 2,
+    "turns": 3
+  },
+  {
+    "name": "guard_up",
+    "display_name": "ガードアップ",
+    "shield": 2,
+    "effect": "shieldUp",
+    "shieldBoost": 2,
+    "turns": 3
+  },
+  {
+    "name": "fortify",
+    "display_name": "フォーティファイ",
+    "shield": 1,
+    "effect": "shieldMultiplier",
+    "multiplier": 1.5,
+    "turns": 2
+  },
+
+  { "name": "heal_potion", "display_name": "ヒールポーション", "heal": 3 },
+  { "name": "quick_draw", "display_name": "クイックドロー", "effect": "drawCard" },
+  { "name": "skip_enemy", "display_name": "スキップショット", "effect": "skipNextTurn" }
+]
