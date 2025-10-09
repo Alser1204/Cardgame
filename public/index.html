@@ -2,6 +2,7 @@
 <html lang="ja">
 
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
   <title>Arcaea カードゲーム</title>
   <link rel="stylesheet" href="style.css">
@@ -34,7 +35,8 @@
         <div id="cardNameList" style="display:flex; flex-direction:column; gap:4px;"></div>
         <div id="cardDetail" style="margin-top:20px;"></div>
       </div>
-      <div class="tab" onclick="alert('ルール説明予定');">ルール</div>
+      <!-- 📜ルール説明ボタン -->
+      <div class="tab" onclick="openRuleModal()">ルール説明</div>
       <div class="tab" onclick="alert('設定予定だけど設定することあるか？');">設定</div>
     </div>
   </div>
@@ -112,20 +114,20 @@
     });
 
     // --- メニュー外クリックで閉じる処理 ---
-    document.addEventListener("click", (e) => {
+    /*document.addEventListener("click", (e) => {
       const menu = document.querySelector(".menu");
       if (!menu.contains(e.target)) {
         const menuContent = document.getElementById("menuContent");
         menuContent.classList.remove("show");
         menuOpen = false;
       }
-    });
+    });*/
 
     let cardList = []; // JSONから読み込むカードデータを保持
 
     function showCardList(filteredCards = null) {
       const container = document.getElementById("cardListContainer");
-      cardOpen=!cardOpen
+      cardOpen = !cardOpen
       if (cardOpen) {
         container.classList.remove("hidden");
       } else {
@@ -143,14 +145,26 @@
 
         // 詳細表示用 div をカード名の下に作る
         const detailDiv = document.createElement("div");
+        detailDiv.classList.add("card-detail"); // ←これを追加！
         detailDiv.style.marginLeft = "20px";
         detailDiv.style.display = "none";
 
         btn.onclick = () => {
           if (detailDiv.style.display === "none") {
+            let effect = "なし"
+            switch(card.effect){
+              case "multiTurn":effect="ターン持続("+card.turns+"ターン)"; break;
+              case "skipNextTurn":effect="相手ターンスキップ"; break;
+              case "drawCard":effect="カードを引く"; break;
+              case "swapHand":effect="相手とカードを交換"; break;
+              case "atkUp":effect="ダメージ量上乗せ"+"+"+card.damageBoost; break;
+              case "atkMultiplier":effect="攻撃力倍率補正"+"×"+card.multiplier; break;
+              case "shieldUp":effect="シールド量上乗せ"+"+"+card.shieldBoost; break;
+              case "shieldMultiplier":effect="防御力倍率補正"+"×"+card.multiplier; break;
+            }
             detailDiv.innerHTML = `
           <img src="images/${card.name}.jpg" alt="${card.name}" style="width:150px;">
-          <p>効果: ${card.effect || "なし"}</p>
+          <p>効果: ${effect || "なし"}</p>
           <p>攻撃: ${card.damage || 0}, 防御: ${card.shield || 0}, 回復: ${card.heal || 0}</p>
         `;
             detailDiv.style.display = "block";
@@ -183,7 +197,22 @@
       .then(cards => cardList = cards)
       .catch(err => console.error("カード一覧読み込み失敗:", err));
 
+    //ルール説明
+    function openRuleModal() {
+      document.getElementById("ruleModal").classList.remove("hidden");
+    }
 
+    function closeRuleModal() {
+      document.getElementById("ruleModal").classList.add("hidden");
+    }
+
+    // 背景クリックでも閉じる
+    window.addEventListener("click", (e) => {
+      const modal = document.getElementById("ruleModal");
+      if (e.target === modal) {
+        closeRuleModal();
+      }
+    });
 
 
     const socket = io();
@@ -536,6 +565,22 @@
 
   </script>
 
+  <!-- 🧱ルールモーダル -->
+  <div id="ruleModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeRuleModal()">×</span>
+      <h2>ルール説明</h2>
+      <p>
+        このゲームはターン制カードバトルです。<br><br>
+        各プレイヤーはカードを1枚ずつ選び、同時に公開します。<br>
+        攻撃カードは相手のHPを減らし、防御カードはダメージを軽減します。<br>
+        回復カードでHPを回復することもできます。<br><br>
+        HPが0になったプレイヤーが敗北となります。<br>
+        特殊カードによって状況が変化することもあります！
+      </p>
+    </div>
+  </div>
+
   <div id="confirmBox" class="hidden">
     <div class="confirm-content">
       <p>本当にターンを終了しますか？</p>
@@ -543,6 +588,8 @@
       <button id="noBtn">キャンセル</button>
     </div>
   </div>
+
+  made by ChatGPT w/Alser
 
 </body>
 
