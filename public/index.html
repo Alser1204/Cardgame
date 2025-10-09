@@ -127,9 +127,9 @@
       const container = document.getElementById("cardListContainer");
       cardOpen=!cardOpen
       if (cardOpen) {
-        container.classList.add("show");
+        container.classList.remove("hidden");
       } else {
-        container.classList.remove("show");
+        container.classList.add("hidden");
       }
 
       const cardsToRender = filteredCards || cardList;
