@@ -126,7 +126,7 @@
     function showCardList(filteredCards = null) {
       const container = document.getElementById("cardListContainer");
       cardOpen=!cardOpen
-      if (menuOpen) {
+      if (cardOpen) {
         container.classList.add("show");
       } else {
         container.classList.remove("show");
