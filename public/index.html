@@ -93,6 +93,7 @@
 
     //メニュータブ
     let menuOpen = false;
+    let cardOpen = false;
 
     function toggleMenu() {
       const menu = document.getElementById("menuContent");
@@ -124,7 +125,12 @@
 
     function showCardList(filteredCards = null) {
       const container = document.getElementById("cardListContainer");
-      container.classList.remove("hidden");
+      cardOpen=!cardOpen
+      if (menuOpen) {
+        container.classList.add("show");
+      } else {
+        container.classList.remove("show");
+      }
 
       const cardsToRender = filteredCards || cardList;
       const nameListDiv = document.getElementById("cardNameList");
