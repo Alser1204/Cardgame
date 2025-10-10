@@ -1,8 +1,8 @@
 [
-  { "name": "fire", "display_name": "ファイア", "damage": 2 },
-  { "name": "slash", "display_name": "スラッシュ", "damage": 1 },
-  { "name": "lightning", "display_name": "ライトニング", "damage": 3 },
-  { "name": "phantom_blade", "display_name": "ファントムブレード", "damage": 2, "ignoreShield": true },
+  { "name": "SAIKYO STRONGER", "display_name": "最強STRONGER", "damage": 3 },
+  { "name": "BUCHiGiRE Berserker", "display_name": "BUCHiGiRE Berserker", "damage": 2 },
+  { "name": "Metallic Punisher", "display_name": "Metallic Punisher", "damage": 1 },
+  { "name": "Judgement", "display_name": "Judgement", "damage": 2, "ignoreShield": true },
 
   { "name": "Heart", "display_name": "心", "heal": 3 },
   { "name": "recover", "display_name": "リカバー", "heal": 2 },
