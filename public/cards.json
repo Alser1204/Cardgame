@@ -18,7 +18,7 @@
   { "name": "draw", "display_name": "ドロー", "effect": "drawCard" },
   { "name": "swap", "display_name": "スワップ", "effect": "swapHand" },
 
-  { "name": "killer_strike", "display_name": "殺す攻撃", "damage": 30 },
+  { "name": "Testify", "display_name": "Testify", "damage": 30 },
 
   {
     "name": "power_strike",
