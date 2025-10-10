@@ -1,24 +1,25 @@
+
 [
-  { "name": "SAIKYO STRONGER", "display_name": "最強STRONGER", "damage": 3 },
-  { "name": "BUCHiGiRE Berserker", "display_name": "BUCHiGiRE Berserker", "damage": 2 },
-  { "name": "Metallic Punisher", "display_name": "Metallic Punisher", "damage": 1 },
-  { "name": "Judgement", "display_name": "Judgement", "damage": 2, "ignoreShield": true },
+  { "name": "SAIKYO STRONGER", "display_name": "最強STRONGER", "damage": 3, "costs":1 },
+  { "name": "BUCHiGiRE Berserker", "display_name": "BUCHiGiRE Berserker", "damage": 2, "costs":1 },
+  { "name": "Metallic Punisher", "display_name": "Metallic Punisher", "damage": 1, "costs":1 },
+  { "name": "Judgement", "display_name": "Judgement", "damage": 2, "ignoreShield": true, "costs":1 },
 
-  { "name": "Heart", "display_name": "心", "heal": 3 },
-  { "name": "Ävril -Flicka i krans-_PST", "display_name": "Ävril -Flicka i krans-", "heal": 2 },
+  { "name": "Heart", "display_name": "心", "heal": 3, "costs":1 },
+  { "name": "Ävril -Flicka i krans-_PST", "display_name": "Ävril -Flicka i krans-", "heal": 2, "costs":1 },
 
-  { "name": "Heavenly caress", "display_name": "Heavenly caress", "effect": "multiTurn", "turns": 3, "healPerTurn": 2 },
+  { "name": "Heavenly caress", "display_name": "Heavenly caress", "effect": "multiTurn", "turns": 3, "healPerTurn": 2, "costs":1 },
 
-  { "name": "guard", "display_name": "ガード", "shield": 2 },
-  { "name": "magic_barrier", "display_name": "マジックバリア", "effect": "multiTurn", "turns": 2, "shieldPerTurn": 2 },
+  { "name": "guard", "display_name": "ガード", "shield": 2, "costs":1 },
+  { "name": "magic_barrier", "display_name": "マジックバリア", "effect": "multiTurn", "turns": 2, "shieldPerTurn": 2, "costs":1 },
 
-  { "name": "freeze", "display_name": "フリーズ", "damage": 1, "effect": "skipNextTurn" },
-  { "name": "storm", "display_name": "ストーム", "effect": "multiTurn", "turns": 2, "damagePerTurn": 1 },
+  { "name": "freeze", "display_name": "フリーズ", "damage": 1, "effect": "skipNextTurn", "costs":1 },
+  { "name": "storm", "display_name": "ストーム", "effect": "multiTurn", "turns": 2, "damagePerTurn": 1, "costs":1 },
 
-  { "name": "draw", "display_name": "ドロー", "effect": "drawCard" },
-  { "name": "swap", "display_name": "スワップ", "effect": "swapHand" },
+  { "name": "draw", "display_name": "ドロー", "effect": "drawCard", "costs":1 },
+  { "name": "swap", "display_name": "スワップ", "effect": "swapHand", "costs":1 },
 
-  { "name": "Testify", "display_name": "Testify", "damage": 30 },
+  { "name": "Testify", "display_name": "Testify", "damage": 30, "costs":1 },
 
   {
     "name": "power_strike",
@@ -26,14 +27,16 @@
     "damage": 3,
     "effect": "atkUp",
     "damageBoost": 2,
-    "turns": 3
+    "turns": 3,
+    "costs":1
   },
   {
     "name": "Infinite Strife",
     "display_name": "Infinite Strife",
     "effect": "atkMultiplier",
     "multiplier": 2,
-    "turns": 3
+    "turns": 3,
+    "costs":1
   },
   {
     "name": "guard_up",
@@ -41,7 +44,8 @@
     "shield": 2,
     "effect": "shieldUp",
     "shieldBoost": 2,
-    "turns": 3
+    "turns": 3,
+    "costs":1
   },
   {
     "name": "fortify",
@@ -49,10 +53,11 @@
     "shield": 1,
     "effect": "shieldMultiplier",
     "multiplier": 1.5,
-    "turns": 2
+    "turns": 2,
+    "costs":1
   },
 
-  { "name": "heal_potion", "display_name": "ヒールポーション", "heal": 3 },
-  { "name": "quick_draw", "display_name": "クイックドロー", "effect": "drawCard" },
-  { "name": "skip_enemy", "display_name": "スキップショット", "effect": "skipNextTurn" }
+  { "name": "heal_potion", "display_name": "ヒールポーション", "heal": 3, "costs":1 },
+  { "name": "quick_draw", "display_name": "クイックドロー", "effect": "drawCard", "costs":1 },
+  { "name": "skip_enemy", "display_name": "スキップショット", "effect": "skipNextTurn", "costs":1 }
 ]
