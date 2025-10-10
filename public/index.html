@@ -65,7 +65,7 @@
       <div id="side-panel">
         <h3>サイドメッセージ</h3>
         <div id="messageWindow"></div>
-        <h3>コスト：5/5(後で実装)</h3>
+        <div id="costDiv"><h3>コスト：5/5</h3></div>
         <div>
           <button id="endTurnBtn">ターン終了</button>
         </div>
@@ -152,15 +152,15 @@
         btn.onclick = () => {
           if (detailDiv.style.display === "none") {
             let effect = "なし"
-            switch(card.effect){
-              case "multiTurn":effect="ターン持続("+card.turns+"ターン)"; break;
-              case "skipNextTurn":effect="相手ターンスキップ"; break;
-              case "drawCard":effect="カードを引く"; break;
-              case "swapHand":effect="相手とカードを交換"; break;
-              case "atkUp":effect="ダメージ量上乗せ"+"+"+card.damageBoost; break;
-              case "atkMultiplier":effect="攻撃力倍率補正"+"×"+card.multiplier; break;
-              case "shieldUp":effect="シールド量上乗せ"+"+"+card.shieldBoost; break;
-              case "shieldMultiplier":effect="防御力倍率補正"+"×"+card.multiplier; break;
+            switch (card.effect) {
+              case "multiTurn": effect = "ターン持続(" + card.turns + "ターン)"; break;
+              case "skipNextTurn": effect = "相手ターンスキップ"; break;
+              case "drawCard": effect = "カードを引く"; break;
+              case "swapHand": effect = "相手とカードを交換"; break;
+              case "atkUp": effect = "ダメージ量上乗せ" + "+" + card.damageBoost; break;
+              case "atkMultiplier": effect = "攻撃力倍率補正" + "×" + card.multiplier; break;
+              case "shieldUp": effect = "シールド量上乗せ" + "+" + card.shieldBoost; break;
+              case "shieldMultiplier": effect = "防御力倍率補正" + "×" + card.multiplier; break;
             }
             detailDiv.innerHTML = `
           <img src="images/${card.name}.jpg" alt="${card.name}" style="width:150px;">
@@ -214,7 +214,6 @@
       }
     });
 
-
     const socket = io();
     let myRoomId = null;
 
@@ -267,7 +266,7 @@
 
       yesBtn.onclick = () => {
         confirmBox.classList.add("hidden");
-        if (myRoomId) socket.emit("endTurn", { roomId: myRoomId });
+        if (myRoomId) socket.emit("endTurn", myRoomId);
         const msg = document.createElement("div");
         msg.textContent = "あなたのターンを終了しました。";
         messagesDiv.appendChild(msg);
@@ -302,8 +301,22 @@
       messageWindowDiv.scrollTop = messageWindowDiv.scrollHeight;
     });
 
+    socket.on("noCosts", () => {
+      const div = document.createElement("div");
+      div.textContent = "コストが足りません！";
+      messageWindowDiv.appendChild(div);
+    });
+
+    //コスト更新
+    socket.on("updateCost", currentCost => {
+      const costDiv = document.getElementById("costDiv");
+      costDiv.innerHTML = `<h3>コスト：${currentCost}/5</h3>`;
+    });
+
+
     // HP更新
     socket.on("updateHP", (hp, names, effects) => {
+
       hpDiv.innerHTML = "";
       for (const id in hp) {
         const name = names[id] || id;
