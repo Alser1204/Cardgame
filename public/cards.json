@@ -5,9 +5,9 @@
   { "name": "Judgement", "display_name": "Judgement", "damage": 2, "ignoreShield": true },
 
   { "name": "Heart", "display_name": "心", "heal": 3 },
-  { "name": "recover", "display_name": "リカバー", "heal": 2 },
+  { "name": "Ävril -Flicka i krans-_PST", "display_name": "Ävril -Flicka i krans-", "heal": 2 },
 
-  { "name": "regene", "display_name": "リジェネ", "effect": "multiTurn", "turns": 3, "healPerTurn": 2 },
+  { "name": "Heavenly caress", "display_name": "Heavenly caress", "effect": "multiTurn", "turns": 3, "healPerTurn": 2 },
 
   { "name": "guard", "display_name": "ガード", "shield": 2 },
   { "name": "magic_barrier", "display_name": "マジックバリア", "effect": "multiTurn", "turns": 2, "shieldPerTurn": 2 },
