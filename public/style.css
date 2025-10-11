@@ -508,3 +508,96 @@
     #noBtn {
       background: #bdc3c7;
     }
+
+    /* =============================
+   📱 モバイル端末（スマホ・タブレット）向け
+============================= */
+    @media screen and (max-width: 1024px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+        padding: 5px;
+      }
+
+      #side-panel {
+        position: static;
+        width: 80%;
+        /* 幅を縮小 */
+        font-size: 10px;
+        /* 文字サイズを小さめに */
+        padding: 4px;
+        /* 内側余白を少なめに */
+        margin-top: 5px;
+      }
+
+      #hpDiv {
+        display: flex;
+        flex-direction: row;
+        /* 横並びに変更 */
+        align-items: center;
+        /* 縦方向中央揃え */
+        gap: 10px;
+        /* バー同士の間隔 */
+      }
+
+      #hpDiv .hp-bar-container {
+        width: 90%;
+      }
+
+      #intro {
+        font-size: 1rem;
+        text-align: center;
+        height: auto;
+      }
+
+      .card {
+        width: 90px;
+        /* カード全体の幅を縮小 */
+        padding: 4px;
+        /* 内側余白も少し小さく */
+      }
+
+      .card img {
+        height: 70px;
+        /* 画像の高さも縮小 */
+      }
+
+      .card-label {
+        font-size: 9px;
+        /* ラベルも小さめに */
+      }
+
+
+    }
+
+    /* =============================
+   📱 モバイル縦画面
+============================= */
+    @media screen and (max-width: 768px) and (orientation: portrait) {
+      body {
+        flex-direction: column;
+      }
+    }
+
+    /* =============================
+   📱 モバイル横画面
+============================= */
+    /*@media screen and (max-width: 768px) and (orientation: landscape) {
+      body {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      #hand {
+        order: 1;
+        width: 55%;
+      }
+
+      #side-panel {
+        order: 2;
+        width: 40%;
+        position: static;
+        margin-top: 0;
+      }
+    }*/
