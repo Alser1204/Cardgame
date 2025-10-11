@@ -36,7 +36,8 @@ try {
 const rooms = {};      // ルームごとの情報を格納
 const handSize = 5;    // 初期手札枚数
 const max_HP = 20;     // 最大HP
-const max_costs = 5;         //初期コスト(未使用)
+const max_costs = 5;   //初期コスト
+const avoid_prob = 0.05   //初期回避確率
 
 // ==============================
 // ターン開始時に発動する効果処理
@@ -120,6 +121,7 @@ io.on("connection", (socket) => {
         hp: {},            // プレイヤーごとのHP
         names: {},         // プレイヤー名
         shield: {},        // シールド値
+        avoid: {},        // 回避確率
         deck: [...cardList].sort(() => Math.random() - 0.5), // シャッフル済み山札
         effects: {},       // 各プレイヤーにかかっている効果
         costs: {}          // コスト
@@ -138,6 +140,7 @@ io.on("connection", (socket) => {
     room.hp[socket.id] = max_HP;
     room.shield[socket.id] = 0;
     room.costs[socket.id] = max_costs;
+    room.avoid[socket.id] = avoid_prob;
 
     socket.join(roomId);
     if (!room.names[socket.id]) room.names[socket.id] = `プレイヤー${room.players.length}`;
@@ -217,21 +220,27 @@ io.on("connection", (socket) => {
 
       // シールドを無視しない場合
       if (!card.ignoreShield) dmg = Math.max(0, dmg - opponentShield);
-      room.hp[opponentId] -= dmg;
+      randInt = Math.random();
+      console.log(randInt+"&"+room.avoid[socket.id])
+      if (randInt >= room.avoid[socket.id]) {
+        room.hp[opponentId] -= dmg;
+        io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
+      } else {
+        io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ しかし ${opponentName} は回避した！`);
+      }
       if (!card.ignoreShield) room.shield[opponentId] = 0;
-
-      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
     }
 
     // --- 自分にバフ系効果 ---
-    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "regene"].includes(card.effect)) {
+    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "avoid"].includes(card.effect)) {
       room.effects[socket.id] = room.effects[socket.id] || [];
       room.effects[socket.id].push({
         card,
         remaining: card.turns,
         damageBoost: card.damageBoost || 0,
         multiplier: card.multiplier || 1,
-        shieldBoost: card.shieldBoost || 0
+        shieldBoost: card.shieldBoost || 0,
+        avoid: card.avoid + avoid_prob || avoid_prob
       });
       io.to(roomId).emit("message", `${myName} に ${card.turns} ターンの ${card.display_name} 効果が発動！`);
     }
@@ -421,5 +430,5 @@ io.on("connection", (socket) => {
 // ==============================
 // サーバー起動
 // ==============================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`listening on *:${PORT}`));
