@@ -43,7 +43,7 @@ const max_costs = 5;         //初期コスト(未使用)
 // ==============================
 function applyStartOfTurnEffects(room, playerId) {
   if (!room.effects[playerId]) return;
-
+  console.log("debug");
   let skipTurn = false;
   let dmgThisTurn = 0;
   let healThisTurn = 0;
