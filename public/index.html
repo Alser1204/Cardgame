@@ -153,7 +153,7 @@
           if (detailDiv.style.display === "none") {
             let effect = "なし"
             switch (card.effect) {
-              case "multiTurn": effect = "ターン持続(" + card.turns + "ターン)"; break;
+              case "multiTurn": effect = card.turns+"ターン持続"; break;
               case "skipNextTurn": effect = "相手ターンスキップ"; break;
               case "drawCard": effect = "カードを引く"; break;
               case "swapHand": effect = "相手とカードを交換"; break;
@@ -165,7 +165,7 @@
             detailDiv.innerHTML = `
           <img src="images/${card.name}.jpg" alt="${card.name}" style="width:150px;">
           <p>効果: ${effect || "なし"}</p>
-          <p>攻撃: ${card.damage || 0}, 防御: ${card.shield || 0}, 回復: ${card.heal || 0}</p>
+          <p>攻撃: ${card.damage || card.damagePerTurn || 0}, 防御: ${card.shield || card.shieldPerTurn || 0}, 回復: ${card.heal || card.healPerTurn ||0}</p>
         `;
             detailDiv.style.display = "block";
           } else {
@@ -380,15 +380,15 @@
                   break;
                 case "multiTurn":
                   if (e.card.healPerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.healPerTurn}（${e.remaining}）`;
+                    badge.textContent = `回復+${e.card.healPerTurn}（${e.remaining}）`;
                     badge.style.background = "#27ae60"; // 緑
                   }
                   else if (e.card.shieldPerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.shieldPerTurn}（${e.remaining}）`;
+                    badge.textContent = `防+${e.card.shieldPerTurn}（${e.remaining}）`;
                     badge.style.background = "#ADD8E6"; // 薄い青
                   }
                   else if (e.card.damagePerTurn) {
-                    badge.textContent = `${e.card.display_name || e.card.name}${e.card.damagePerTurn}（${e.remaining}）`;
+                    badge.textContent = `攻+${e.card.damagePerTurn}（${e.remaining}）`;
                     badge.style.background = "#800080"; // 紫
                   }
                   else {
