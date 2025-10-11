@@ -23,7 +23,7 @@ app.use(express.static("public"));
 let cardList = [];
 try {
   // cards.json を読み込んでパース
-  const data = fs.readFileSync(path.join(__dirname, "public","cards.json"), "utf8");
+  const data = fs.readFileSync(path.join(__dirname, "public", "cards.json"), "utf8");
   cardList = JSON.parse(data);
   console.log("カードデータ読み込み成功:", cardList);
 } catch (err) {
@@ -57,9 +57,9 @@ function applyStartOfTurnEffects(room, playerId) {
         skipTurn = true;
       }
       // 継続ダメージや回復
-        dmgThisTurn += e.card.damagePerTurn;
-        healThisTurn += e.card.healPerTurn;
-        shieldThisTurn += e.card.shieldPerTurn;
+      dmgThisTurn += e.card.damagePerTurn;
+      healThisTurn += e.card.healPerTurn;
+      shieldThisTurn += e.card.shieldPerTurn;
       // バフ効果（atkUp, shieldUpなど）は残存ターン管理のみ
       if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier"].includes(e.card.effect)) {
         // ここでは数値の更新はせず、残りターンだけ減らす
@@ -84,7 +84,7 @@ function applyStartOfTurnEffects(room, playerId) {
   // 残りターンが0の効果は削除
   room.effects[playerId] = room.effects[playerId].filter(e => e.remaining > 0);
 
-  return { skipTurn, dmgThisTurn, healThisTurn, shieldThisTurn};
+  return { skipTurn, dmgThisTurn, healThisTurn, shieldThisTurn };
 }
 
 // ==============================
@@ -106,8 +106,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("debug", (msg) => {
-  console.log(msg);
-});
+    console.log(msg);
+  });
 
   // ルームに参加
   socket.on("joinRoom", (roomId) => {
@@ -127,9 +127,9 @@ io.on("connection", (socket) => {
     }
 
     const room = rooms[roomId];
-    if (room.players.length >= 2) { 
-      socket.emit("roomFull"); 
-      return; 
+    if (room.players.length >= 2) {
+      socket.emit("roomFull");
+      return;
     }
 
     // プレイヤー情報を追加
@@ -147,7 +147,7 @@ io.on("connection", (socket) => {
     // プレイヤー2人揃ったらゲーム開始
     if (room.players.length === 2) {
       io.to(roomId).emit("message", "ゲーム開始！");
-      
+
       // HPを全員に一度送る
       io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
 
@@ -164,12 +164,12 @@ io.on("connection", (socket) => {
   socket.on("playCard", ({ roomId, cardName }) => {
     const room = rooms[roomId];
     if (!room) return;
-    if (room.players[room.turnIndex] !== socket.id) { 
-      socket.emit("notYourTurn"); 
-      return; 
+    if (room.players[room.turnIndex] !== socket.id) {
+      socket.emit("notYourTurn");
+      return;
     }
-    if(room.costs[socket.id] <= 0) {
-      socket.emit("noCosts"); 
+    if (room.costs[socket.id] <= 0) {
+      socket.emit("noCosts");
       return;
     }
 
@@ -182,13 +182,46 @@ io.on("connection", (socket) => {
     //コスト消費
     const cost = Number(card.costs || 0);
     room.costs[socket.id] -= cost;
-    socket.emit("updateCost", room.costs[socket.id]); 
+    socket.emit("updateCost", room.costs[socket.id]);
 
     // 使用カードを手札から除去
     room.hands[socket.id] = hand.filter(c => c.name !== cardName);
     const opponentId = room.players.find(id => id !== socket.id);
     const myName = room.names[socket.id];
     const opponentName = room.names[opponentId];
+
+    // --- ダメージ処理 ---
+    if (card.damage) {
+      let dmg = card.damage;
+
+      // 自分の攻撃バフ適用
+      if (room.effects[socket.id]) {
+        room.effects[socket.id].forEach(e => {
+          if (e.remaining > 0) {
+            if (e.card.effect === "atkMultiplier") dmg = Math.floor(dmg * e.multiplier); //乗算→加算
+            if (e.card.effect === "atkUp") dmg += e.damageBoost;
+          }
+        });
+      }
+
+      // 相手のシールドバフ適用
+      let opponentShield = room.shield[opponentId] || 0;
+      if (room.effects[opponentId]) {
+        room.effects[opponentId].forEach(e => {
+          if (e.remaining > 0) {
+            if (e.card.effect === "shieldMultiplier") opponentShield = Math.floor(opponentShield * e.multiplier); //乗算→加算
+            if (e.card.effect === "shieldUp") opponentShield += e.shieldBoost;
+          }
+        });
+      }
+
+      // シールドを無視しない場合
+      if (!card.ignoreShield) dmg = Math.max(0, dmg - opponentShield);
+      room.hp[opponentId] -= dmg;
+      if (!card.ignoreShield) room.shield[opponentId] = 0;
+
+      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
+    }
 
     // --- 自分にバフ系効果 ---
     if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "regene"].includes(card.effect)) {
@@ -208,9 +241,9 @@ io.on("connection", (socket) => {
       // 自分に付与（リジェネや防御）
       if (card.healPerTurn || card.shieldPerTurn) {
         room.effects[socket.id] = room.effects[socket.id] || [];
-        room.effects[socket.id].push({ 
-          card, 
-          remaining: card.turns, 
+        room.effects[socket.id].push({
+          card,
+          remaining: card.turns,
           healPerTurn: card.healPerTurn || 0,
           shieldPerTurn: card.shieldPerTurn || 0
         });
@@ -219,10 +252,10 @@ io.on("connection", (socket) => {
       // 相手に付与（毒・ストーム）
       if (card.damagePerTurn) {
         room.effects[opponentId] = room.effects[opponentId] || [];
-        room.effects[opponentId].push({ 
-          card, 
-          remaining: card.turns, 
-          damagePerTurn: card.damagePerTurn 
+        room.effects[opponentId].push({
+          card,
+          remaining: card.turns,
+          damagePerTurn: card.damagePerTurn
         });
         io.to(roomId).emit("message", `${opponentName} に ${card.display_name} が発動！`);
       }
@@ -233,39 +266,6 @@ io.on("connection", (socket) => {
       room.effects[opponentId] = room.effects[opponentId] || [];
       room.effects[opponentId].push({ card, remaining: 1, skip: true });
       io.to(roomId).emit("message", `${opponentName} の次のターンがスキップされます！`);
-    }
-
-    // --- ダメージ処理 ---
-    if (card.damage) {
-      let dmg = card.damage;
-
-      // 自分の攻撃バフ適用
-      if (room.effects[socket.id]) {
-        room.effects[socket.id].forEach(e => {
-          if (e.remaining > 0) {
-            if (e.card.effect === "atkUp") dmg += e.damageBoost;
-            if (e.card.effect === "atkMultiplier") dmg = Math.floor(dmg * e.multiplier);
-          }
-        });
-      }
-
-      // 相手のシールドバフ適用
-      let opponentShield = room.shield[opponentId] || 0;
-      if (room.effects[opponentId]) {
-        room.effects[opponentId].forEach(e => {
-          if (e.remaining > 0) {
-            if (e.card.effect === "shieldUp") opponentShield += e.shieldBoost;
-            if (e.card.effect === "shieldMultiplier") opponentShield = Math.floor(opponentShield * e.multiplier);
-          }
-        });
-      }
-
-      // シールドを無視しない場合
-      if (!card.ignoreShield) dmg = Math.max(0, dmg - opponentShield);
-      room.hp[opponentId] -= dmg;
-      if (!card.ignoreShield) room.shield[opponentId] = 0;
-
-      io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
     }
 
     // --- 回復処理 ---
@@ -283,7 +283,7 @@ io.on("connection", (socket) => {
 
     // --- ドロー効果 ---
     if (card.effect === "drawCard" && room.deck.length > 0) {
-      const drawn = room.deck.splice(0,1)[0];
+      const drawn = room.deck.splice(0, 1)[0];
       room.hands[socket.id].push(drawn);
       io.to(socket.id).emit("updateHand", room.hands[socket.id]);
       io.to(socket.id).emit("playerMessage", `山札からカードを1枚引きました: ${drawn.display_name}`);
@@ -291,8 +291,8 @@ io.on("connection", (socket) => {
 
     // --- 手札交換効果 ---
     if (card.effect === "swapHand" && room.hands[opponentId].length > 0 && room.hands[socket.id].length > 0) {
-      const myCardIndex = Math.floor(Math.random()*room.hands[socket.id].length);
-      const oppCardIndex = Math.floor(Math.random()*room.hands[opponentId].length);
+      const myCardIndex = Math.floor(Math.random() * room.hands[socket.id].length);
+      const oppCardIndex = Math.floor(Math.random() * room.hands[opponentId].length);
       const temp = room.hands[socket.id][myCardIndex];
       room.hands[socket.id][myCardIndex] = room.hands[opponentId][oppCardIndex];
       room.hands[opponentId][oppCardIndex] = temp;
@@ -329,70 +329,70 @@ io.on("connection", (socket) => {
       return;
     }
 
-    
+
   });
 
   socket.on("endTurn", (roomId) => {
-  const room = rooms[roomId];
-  if (!room) return;
-  if (room.players[room.turnIndex] !== socket.id) {
-    socket.emit("notYourTurn");
-    return;
-  }
-
-  // 次のプレイヤーを仮決定
-  let currentPlayer = room.players[room.turnIndex];
-  let nextIndex = (room.turnIndex + 1) % room.players.length;
-  let nextPlayer = room.players[nextIndex];
-
-  // --- 次ターン開始効果を適用 ---
-  const effectResult = applyStartOfTurnEffects(room, nextPlayer);
-
-  // ダメージ・回復などの通知
-  if (effectResult) {
-    const nextName = room.names[nextPlayer];
-
-    if (effectResult.dmgThisTurn > 0) {
-      io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.dmgThisTurn} ダメージを受けた！`);
-    }
-    if (effectResult.healThisTurn > 0) {
-      io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.healThisTurn} 回復した！`);
-    }
-    if (effectResult.shieldThisTurn > 0) {
-      io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.shieldThisTurn} のシールドを得た！`);
+    const room = rooms[roomId];
+    if (!room) return;
+    if (room.players[room.turnIndex] !== socket.id) {
+      socket.emit("notYourTurn");
+      return;
     }
 
-    // --- スキップ効果がある場合 ---
-    if (effectResult.skipTurn) {
-      io.to(roomId).emit("message", `${nextName} のターンはスキップされました！`);
-      nextIndex = (nextIndex + 1) % room.players.length;
-      nextPlayer = room.players[nextIndex];
+    // 次のプレイヤーを仮決定
+    let currentPlayer = room.players[room.turnIndex];
+    let nextIndex = (room.turnIndex + 1) % room.players.length;
+    let nextPlayer = room.players[nextIndex];
+
+    // --- 次ターン開始効果を適用 ---
+    const effectResult = applyStartOfTurnEffects(room, nextPlayer);
+
+    // ダメージ・回復などの通知
+    if (effectResult) {
+      const nextName = room.names[nextPlayer];
+
+      if (effectResult.dmgThisTurn > 0) {
+        io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.dmgThisTurn} ダメージを受けた！`);
+      }
+      if (effectResult.healThisTurn > 0) {
+        io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.healThisTurn} 回復した！`);
+      }
+      if (effectResult.shieldThisTurn > 0) {
+        io.to(roomId).emit("message", `${nextName} は効果で ${effectResult.shieldThisTurn} のシールドを得た！`);
+      }
+
+      // --- スキップ効果がある場合 ---
+      if (effectResult.skipTurn) {
+        io.to(roomId).emit("message", `${nextName} のターンはスキップされました！`);
+        nextIndex = (nextIndex + 1) % room.players.length;
+        nextPlayer = room.players[nextIndex];
+      }
     }
-  }
 
-  // --- HP更新を送信 ---
-  io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
+    // --- HP更新を送信 ---
+    io.to(roomId).emit("updateHP", room.hp, room.names, room.effects);
 
-  // --- 勝利判定（効果ダメージで死んだ場合も含む） ---
-  const loser = room.players.find(id => room.hp[id] <= 0);
-  if (loser) {
-    const winner = room.players.find(id => id !== loser);
-    io.to(roomId).emit("message", `${room.names[winner]} の勝利！`);
-    io.to(roomId).emit("gameOver", room.names[winner]);
-    delete rooms[roomId];
-    return;
-  }
+    // --- 勝利判定（効果ダメージで死んだ場合も含む） ---
+    const loser = room.players.find(id => room.hp[id] <= 0);
+    if (loser) {
+      const winner = room.players.find(id => id !== loser);
+      io.to(roomId).emit("message", `${room.names[winner]} の勝利！`);
+      io.to(roomId).emit("gameOver", room.names[winner]);
+      delete rooms[roomId];
+      return;
+    }
 
-  // --- ターンを正式に交代 ---
-  room.turnIndex = nextIndex;
-  const newTurnPlayer = room.players[room.turnIndex];
-  if(room.costs[currentPlayer]<5) room.costs[currentPlayer] += 1;
-  socket.emit("updateCost", room.costs[currentPlayer]); 
-  io.to(currentPlayer).emit("playerMessage", `コストが1回復しました！`);
+    // --- ターンを正式に交代 ---
+    room.turnIndex = nextIndex;
+    const newTurnPlayer = room.players[room.turnIndex];
+    if (room.costs[currentPlayer] < 5) room.costs[currentPlayer] += 1;
+    socket.emit("updateCost", room.costs[currentPlayer]);
+    io.to(currentPlayer).emit("playerMessage", `コストが1回復しました！`);
 
-  io.to(roomId).emit("message", `${room.names[newTurnPlayer]} のターン！`);
-  io.to(newTurnPlayer).emit("yourTurn", room.hands[newTurnPlayer], room.hp, room.names);
-});
+    io.to(roomId).emit("message", `${room.names[newTurnPlayer]} のターン！`);
+    io.to(newTurnPlayer).emit("yourTurn", room.hands[newTurnPlayer], room.hp, room.names);
+  });
 
 
   // ==============================
@@ -421,5 +421,5 @@ io.on("connection", (socket) => {
 // ==============================
 // サーバー起動
 // ==============================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`listening on *:${PORT}`));
