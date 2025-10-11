@@ -507,11 +507,14 @@
         if (card.damage) desc += ` 攻撃:${card.damage}`;
         if (card.heal) desc += ` 回復:${card.heal}`;
         if (card.shield) desc += ` 防御:${card.shield}`;
+        if (card.damagePerTurn) desc += ` 攻撃:${card.damagePerTurn}`;
+        if (card.healPerTurn) desc += ` 回復:${card.healPerTurn}`;
+        if (card.shieldPerTurn) desc += ` 防御:${card.shieldPerTurn}`;
         if (card.effect) {
           switch (card.effect) {
-            case "atkUp": desc += " 効果:攻撃アップ"; break;
+            case "atkUp": desc += ` 効果:攻撃+${card.damageBoost}`; break;
             case "atkMultiplier": desc += ` 効果:攻撃×${card.multiplier}`; break;
-            case "shieldUp": desc += " 効果:防御アップ"; break;
+            case "shieldUp": desc += ` 効果:防御アップ${card.shieldBoost}`; break;
             case "shieldMultiplier": desc += ` 効果:防御×${card.multiplier}`; break;
             case "skipNextTurn": desc += " 効果:次のターンスキップ"; break;
             case "drawCard": desc += " 効果:カードを引く"; break;
