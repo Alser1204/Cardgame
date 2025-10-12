@@ -21,11 +21,21 @@ app.use(express.static("public"));
 // カードデータの読み込み
 // ==============================
 let cardList = [];
+let AnothercardList = [];
 try {
   // cards.json を読み込んでパース
   const data = fs.readFileSync(path.join(__dirname, "public", "cards.json"), "utf8");
   cardList = JSON.parse(data);
   console.log("カードデータ読み込み成功:", cardList);
+} catch (err) {
+  console.error("カードデータ読み込みエラー:", err);
+}
+
+try {
+  // cards.json を読み込んでパース
+  const AnotherData = fs.readFileSync(path.join(__dirname, "public", "dgacha.json"), "utf8");
+  AnothercardList = JSON.parse(AnotherData);
+  console.log("カードデータ読み込み成功:", AnothercardList);
 } catch (err) {
   console.error("カードデータ読み込みエラー:", err);
 }
@@ -62,7 +72,7 @@ function applyStartOfTurnEffects(room, playerId) {
       healThisTurn += e.card.healPerTurn;
       shieldThisTurn += e.card.shieldPerTurn;
       // バフ効果（atkUp, shieldUpなど）は残存ターン管理のみ
-      if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier"].includes(e.card.effect)) {
+      if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "avoidUp"].includes(e.card.effect)) {
         // ここでは数値の更新はせず、残りターンだけ減らす
       }
       // 効果ターンを1減らす
@@ -114,17 +124,18 @@ io.on("connection", (socket) => {
   socket.on("joinRoom", (roomId) => {
     if (!rooms[roomId]) {
       // 新しいルームを作成
+      const isDgacha = roomId.includes("dgacha");
       rooms[roomId] = {
-        players: [],       // プレイヤーID
-        turnIndex: 0,      // 現在のターンを持っているプレイヤー
-        hands: {},         // プレイヤーごとの手札
-        hp: {},            // プレイヤーごとのHP
-        names: {},         // プレイヤー名
-        shield: {},        // シールド値
-        avoid: {},        // 回避確率
-        deck: [...cardList].sort(() => Math.random() - 0.5), // シャッフル済み山札
-        effects: {},       // 各プレイヤーにかかっている効果
-        costs: {}          // コスト
+        players: [],
+        turnIndex: 0,
+        hands: {},
+        hp: {},
+        names: {},
+        shield: {},
+        avoid: {},
+        deck: [...(isDgacha ? AnothercardList : cardList)].sort(() => Math.random() - 0.5),
+        effects: {},
+        costs: {}
       };
     }
 
@@ -217,12 +228,14 @@ io.on("connection", (socket) => {
           }
         });
       }
+      let canAvoid=0;
 
       // シールドを無視しない場合
       if (!card.ignoreShield) dmg = Math.max(0, dmg - opponentShield);
       randInt = Math.random();
-      console.log(randInt+"&"+room.avoid[socket.id])
-      if (randInt >= room.avoid[socket.id]) {
+        console.log(randInt + "&" + room.avoid[opponentId]);
+        if(randInt>=room.avoid[opponentId]) canAvoid=1;
+      if (canAvoid) {
         room.hp[opponentId] -= dmg;
         io.to(roomId).emit("message", `${myName} が ${card.display_name} をプレイ！ ${opponentName} に ${dmg} ダメージ`);
       } else {
@@ -232,7 +245,7 @@ io.on("connection", (socket) => {
     }
 
     // --- 自分にバフ系効果 ---
-    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "avoid"].includes(card.effect)) {
+    if (["atkUp", "atkMultiplier", "shieldUp", "shieldMultiplier", "avoidUp"].includes(card.effect)) {
       room.effects[socket.id] = room.effects[socket.id] || [];
       room.effects[socket.id].push({
         card,
@@ -240,9 +253,9 @@ io.on("connection", (socket) => {
         damageBoost: card.damageBoost || 0,
         multiplier: card.multiplier || 1,
         shieldBoost: card.shieldBoost || 0,
-        avoid: card.avoid + avoid_prob || avoid_prob
       });
-      io.to(roomId).emit("message", `${myName} に ${card.turns} ターンの ${card.display_name} 効果が発動！`);
+      room.avoid[socket.id]=card.avoid + avoid_prob || avoid_prob
+      io.to(roomId).emit("message", `${myName} に ${card.turns} ターンの ${card.display_name} 効果が発動！`); //display_nameからは変えた方がいいかも
     }
 
     // --- 継続効果 ---
