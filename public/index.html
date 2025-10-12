@@ -65,7 +65,9 @@
       <div id="side-panel">
         <h3>個人メッセージ</h3>
         <div id="messageWindow"></div>
-        <div id="costDiv"><h3>コスト：5/5</h3></div>
+        <div id="costDiv">
+          <h3>コスト：5/5</h3>
+        </div>
         <div>
           <button id="endTurnBtn">ターン終了</button>
         </div>
@@ -125,9 +127,13 @@
 
     let cardList = []; // JSONから読み込むカードデータを保持
 
-    function showCardList(filteredCards = null) {
+    function showCardList(filteredCards = null, toggle = true) {
       const container = document.getElementById("cardListContainer");
-      cardOpen = !cardOpen
+
+      if (toggle) {
+        cardOpen = !cardOpen;
+      }
+
       if (cardOpen) {
         container.classList.remove("hidden");
       } else {
@@ -139,21 +145,20 @@
       nameListDiv.innerHTML = "";
 
       cardsToRender.forEach(card => {
-        const btn = document.createElement("cardListButton"); // 修正
+        const btn = document.createElement("cardListButton");
         btn.textContent = card.display_name || card.name;
         btn.style.textAlign = "left";
 
-        // 詳細表示用 div をカード名の下に作る
         const detailDiv = document.createElement("div");
-        detailDiv.classList.add("card-detail"); // ←これを追加！
+        detailDiv.classList.add("card-detail");
         detailDiv.style.marginLeft = "20px";
         detailDiv.style.display = "none";
 
         btn.onclick = () => {
           if (detailDiv.style.display === "none") {
-            let effect = "なし"
+            let effect = "なし";
             switch (card.effect) {
-              case "multiTurn": effect = card.turns+"ターン持続"; break;
+              case "multiTurn": effect = "ターン持続"; break;
               case "skipNextTurn": effect = "相手ターンスキップ"; break;
               case "drawCard": effect = "カードを引く"; break;
               case "swapHand": effect = "相手とカードを交換"; break;
@@ -161,11 +166,14 @@
               case "atkMultiplier": effect = "攻撃力倍率補正" + "×" + card.multiplier; break;
               case "shieldUp": effect = "シールド量上乗せ" + "+" + card.shieldBoost; break;
               case "shieldMultiplier": effect = "防御力倍率補正" + "×" + card.multiplier; break;
+              case "shieldMultiplier": effect = "防御力倍率補正" + "×" + card.multiplier; break;
+              case "avoidUp": effect = "回避率アップ" + "+" + card.avoid*100; break;
             }
             detailDiv.innerHTML = `
           <img src="images/${card.name}.jpg" alt="${card.name}" style="width:150px;">
           <p>効果: ${effect || "なし"}</p>
-          <p>攻撃: ${card.damage || card.damagePerTurn || 0}, 防御: ${card.shield || card.shieldPerTurn || 0}, 回復: ${card.heal || card.healPerTurn ||0}</p>
+          <p>持続ターン数: ${card.turns || "なし"}</p>
+          <p>攻撃: ${card.damage || card.damagePerTurn || 0}, 防御: ${card.shield || card.shieldPerTurn || 0}, 回復: ${card.heal || card.healPerTurn || 0}</p>
         `;
             detailDiv.style.display = "block";
           } else {
@@ -178,24 +186,31 @@
       });
     }
 
+
     // 検索
     document.getElementById("cardSearch").addEventListener("input", (e) => {
       const query = e.target.value.toLowerCase();
       if (!query) {
-        showCardList();
+        showCardList(null, false);
         return;
       }
       const filteredCards = cardList.filter(card =>
         (card.display_name || card.name).toLowerCase().includes(query)
       );
-      showCardList(filteredCards);
+      showCardList(filteredCards, false); // ←ここでfalse指定！
     });
+
 
     // 初回カード読み込み
     fetch("cards.json")
       .then(res => res.json())
       .then(cards => cardList = cards)
       .catch(err => console.error("カード一覧読み込み失敗:", err));
+
+    fetch("dgacha.json")
+      .then(res => res.json())
+      .then(cards => dgachaCardList = cards)
+      .catch(err => console.error("dgachaカード一覧読み込み失敗:", err));
 
     //ルール説明
     function openRuleModal() {
@@ -244,6 +259,7 @@
     document.getElementById("joinBtn").onclick = () => {
       const roomId = document.getElementById("roomInput").value.trim();
       if (!roomId) return;
+      if (roomId.includes("dgacha")) cardList = dgachaCardList;
       myRoomId = roomId;
       socket.emit("joinRoom", roomId);
 
@@ -251,7 +267,6 @@
       document.getElementById("intro").classList.add("hidden");
       document.getElementById("entered-room").classList.remove("hidden");
     };
-
 
     //ターン終了確認
     document.addEventListener("DOMContentLoaded", () => {
@@ -373,6 +388,10 @@
                 case "shieldMultiplier":
                   badge.textContent = `防×${e.card.multiplier}（${e.remaining}）`;
                   badge.style.background = "#2980b9"; // 濃青
+                  break;
+                case "avoidUp":
+                  badge.textContent = `回避率+${e.card.avoid*100}%（${e.remaining}）`;
+                  badge.style.background = "#a0d8ef"; // 薄青
                   break;
                 case "skipNextTurn":
                   //badge.textContent = "スキップ";
