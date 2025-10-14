@@ -428,13 +428,6 @@
       background: #555;
     }
 
-    .menu-content {
-      display: none;
-      margin-top: 8px;
-      flex-direction: column;
-      gap: 5px;
-    }
-
     /*.menu:hover .menu-content {
       display: flex;
     }*/
@@ -457,11 +450,20 @@
       margin-top: 8px;
       flex-direction: column;
       gap: 5px;
+    
+      /* ▼ 見やすくするための追加部分 ▼ */
+      background: rgba(0, 0, 0, 0.8); /* 半透明の黒背景 */
+      color: white;                    /* 文字色を白に */
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* 影を追加 */
+    
+      /* ▼ アニメーション関係 ▼ */
       opacity: 0;
       transform: translateY(-5px);
       transition: all 0.2s ease;
     }
-
+    
     .menu-content.show {
       display: flex;
       opacity: 1;
@@ -601,3 +603,4 @@
         margin-top: 0;
       }
     }*/
+
