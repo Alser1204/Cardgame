@@ -45,33 +45,30 @@
     }
 
     #playedCardContainer {
-      position: absolute;
-      top: 150px;
-      /* 手札の上あたり */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      /* 好きなサイズ */
-      height: 280px;
-      pointer-events: none;
-      /* 操作不可 */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      /* 手札より上に表示 */
-    }
+  position: fixed; /* ← 絶対位置ではなく画面基準に変更！ */
+  top: 50%;        /* 画面中央に */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;    /* 少し大きめに */
+  height: 560px;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;    /* 最前面 */
+}
 
-    #playedCardContainer img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-      opacity: 0;
-      transform: scale(0.8);
-      transition: all 0.4s ease;
-    }
+#playedCardContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.4s ease;
+}
+
 
 
 
@@ -603,4 +600,5 @@
         margin-top: 0;
       }
     }*/
+
 
