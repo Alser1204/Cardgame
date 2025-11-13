@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 
+  <div id="playedCardContainer"></div>
+  
 <body>
   <!-- 左上ホバー式メニュー -->
   <div class="menu">
@@ -73,8 +75,6 @@
         </div>
       </div>
     </div>
-
-    <div id="playedCardContainer"></div>
 
     <h3>手札</h3>
     <div id="hand"></div>
@@ -148,7 +148,6 @@
         const btn = document.createElement("cardListButton");
         btn.textContent = card.display_name || card.name;
         btn.style.textAlign = "left";
-        btn.style.color = "black";
 
         const detailDiv = document.createElement("div");
         detailDiv.classList.add("card-detail");
@@ -177,6 +176,7 @@
           <p>攻撃: ${card.damage || card.damagePerTurn || 0}, 防御: ${card.shield || card.shieldPerTurn || 0}, 回復: ${card.heal || card.healPerTurn || 0}</p>
         `;
             detailDiv.style.display = "block";
+            detailDiv.style.color = "black";
           } else {
             detailDiv.style.display = "none";
           }
